@@ -105,6 +105,7 @@ export default function ScheduleDetailPage() {
   const [editZoom, setEditZoom] = useState({ meeting_number: "", password: "" });
   const [activeTab, setActiveTab] = useState<"overview" | "access" | "sessions" | "chat">("overview");
   const [chatFilter, setChatFilter] = useState<"all" | "pending" | "approved">("all");
+  const [testPageOpened, setTestPageOpened] = useState(false);
 
   // 編集フォーム
   const [isEditing, setIsEditing] = useState(false);
@@ -502,15 +503,45 @@ export default function ScheduleDetailPage() {
 
             {/* 配信操作 */}
             <div className="flex flex-wrap gap-2">
-              <Button
-                onClick={toggleTestLive}
-                disabled={isUpdating}
-                variant={schedule.is_test_live ? "destructive" : "outline"}
-                className="gap-2"
-              >
-                <FlaskConical className="h-4 w-4" />
-                {schedule.is_test_live ? "テスト配信停止" : "テスト配信"}
-              </Button>
+              {/* テスト配信: 3段階フロー */}
+              {!schedule.is_test_live && !testPageOpened && (
+                <Button
+                  onClick={() => {
+                    window.open(`/watch/${schedule.slug}?mode=test`, "_blank");
+                    setTestPageOpened(true);
+                  }}
+                  disabled={isUpdating}
+                  variant="outline"
+                  className="gap-2"
+                >
+                  <FlaskConical className="h-4 w-4" />
+                  テスト配信を行う
+                </Button>
+              )}
+              {!schedule.is_test_live && testPageOpened && (
+                <Button
+                  onClick={toggleTestLive}
+                  disabled={isUpdating}
+                  className="gap-2 bg-amber-600 hover:bg-amber-700 text-white"
+                >
+                  <Play className="h-4 w-4" />
+                  テスト配信開始
+                </Button>
+              )}
+              {schedule.is_test_live && (
+                <Button
+                  onClick={() => {
+                    toggleTestLive();
+                    setTestPageOpened(false);
+                  }}
+                  disabled={isUpdating}
+                  variant="destructive"
+                  className="gap-2"
+                >
+                  <Square className="h-4 w-4" />
+                  テスト配信終了
+                </Button>
+              )}
               {schedule.status === "upcoming" && (
                 <Button
                   onClick={() => changeStatus("live")}
@@ -549,12 +580,14 @@ export default function ScheduleDetailPage() {
       </Card>
 
       {/* テスト配信URL */}
-      {schedule.is_test_live && (
+      {(testPageOpened || schedule.is_test_live) && (
         <Card className="border-amber-500/50 bg-amber-50 dark:bg-amber-950/20">
           <CardContent className="p-4">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex-1 space-y-1">
-                <p className="text-xs font-medium text-amber-600">テスト配信URL（テスト配信中のみ有効）</p>
+                <p className="text-xs font-medium text-amber-600">
+                  {schedule.is_test_live ? "テスト配信中" : "テストページ表示中（配信未開始）"}
+                </p>
                 <div className="flex items-center gap-2">
                   <FlaskConical className="h-4 w-4 text-amber-600" />
                   <code className="text-sm font-mono">

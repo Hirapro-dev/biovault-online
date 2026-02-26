@@ -41,6 +41,8 @@ export function StreamContainer({
       // 拡大
       setIsFullscreen(true);
       document.body.style.overflow = "hidden";
+      // モバイルブラウザのアドレスバーを縮小させるためスクロールを発火
+      window.scrollTo(0, 1);
       // ネイティブ Fullscreen API を試す（PC Chrome/Firefox 等で有効）
       if (videoAreaRef.current?.requestFullscreen) {
         videoAreaRef.current.requestFullscreen().catch(() => {
@@ -161,9 +163,10 @@ export function StreamContainer({
       ref={videoAreaRef}
       className={
         isFullscreen
-          ? "fixed inset-0 z-[9998] flex items-center justify-center bg-black overflow-hidden"
+          ? "fixed top-0 left-0 z-[9998] flex items-center justify-center bg-black overflow-hidden w-screen"
           : "relative w-full bg-[#050a0e] border border-teal-500/30 rounded-lg overflow-hidden aspect-video"
       }
+      style={isFullscreen ? { height: "100dvh" } : undefined}
     >
       {/* テストモード: is_test_live で表示制御 */}
       {isTestMode && isTestLive && schedule.zoom_meeting_number && (
