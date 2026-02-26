@@ -26,27 +26,45 @@ export function StreamContainer({
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   // フルスクリーン切り替え
+  // iOS Safari は div/iframe に対して requestFullscreen() をサポートしないため、
+  // CSS fixed で画面全体を覆う「疑似フルスクリーン」をベースにし、
+  // 対応ブラウザではネイティブ Fullscreen API も併用する
   const toggleFullscreen = useCallback(() => {
-    if (!videoAreaRef.current) return;
-
-    if (!document.fullscreenElement) {
-      videoAreaRef.current.requestFullscreen().then(() => {
-        setIsFullscreen(true);
-      }).catch(() => {});
+    if (isFullscreen) {
+      // 解除
+      setIsFullscreen(false);
+      document.body.style.overflow = "";
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {});
+      }
     } else {
-      document.exitFullscreen().then(() => {
-        setIsFullscreen(false);
-      }).catch(() => {});
+      // 拡大
+      setIsFullscreen(true);
+      document.body.style.overflow = "hidden";
+      // ネイティブ Fullscreen API を試す（PC Chrome/Firefox 等で有効）
+      if (videoAreaRef.current?.requestFullscreen) {
+        videoAreaRef.current.requestFullscreen().catch(() => {
+          // iOS等で失敗しても疑似フルスクリーン(CSS fixed)で対応済み
+        });
+      }
     }
-  }, []);
+  }, [isFullscreen]);
 
-  // フルスクリーン状態の監視
+  // ネイティブ Fullscreen が外部操作(Escキー等)で解除された場合に同期
   useEffect(() => {
     function onFullscreenChange() {
-      setIsFullscreen(!!document.fullscreenElement);
+      if (!document.fullscreenElement && isFullscreen) {
+        setIsFullscreen(false);
+        document.body.style.overflow = "";
+      }
     }
     document.addEventListener("fullscreenchange", onFullscreenChange);
     return () => document.removeEventListener("fullscreenchange", onFullscreenChange);
+  }, [isFullscreen]);
+
+  // クリーンアップ: アンマウント時にbodyのoverflowを復元
+  useEffect(() => {
+    return () => { document.body.style.overflow = ""; };
   }, []);
 
   // マウント時にDBから最新ステータスを取得（キャッシュ対策）
@@ -136,7 +154,11 @@ export function StreamContainer({
   return (
     <div
       ref={videoAreaRef}
-      className={`relative w-full bg-[#050a0e] border border-teal-500/30 rounded-lg overflow-hidden ${isFullscreen ? "h-screen border-0 rounded-none" : "aspect-video"}`}
+      className={
+        isFullscreen
+          ? "fixed inset-0 z-[9998] w-full h-full bg-black overflow-hidden"
+          : "relative w-full bg-[#050a0e] border border-teal-500/30 rounded-lg overflow-hidden aspect-video"
+      }
     >
       {/* テストモード: is_test_live で表示制御 */}
       {isTestMode && isTestLive && schedule.zoom_meeting_number && (
