@@ -291,15 +291,21 @@ export default function ScheduleDetailPage() {
   async function toggleTestLive() {
     if (!schedule) return;
     setIsUpdating(true);
-    const supabase = createClient();
-    const newValue = !schedule.is_test_live;
+    try {
+      const supabase = createClient();
+      const newValue = !schedule.is_test_live;
 
-    const { error } = await supabase
-      .from("schedules")
-      .update({ is_test_live: newValue })
-      .eq("id", scheduleId);
+      const { error } = await supabase
+        .from("schedules")
+        .update({ is_test_live: newValue })
+        .eq("id", scheduleId);
 
-    if (!error) {
+      if (error) {
+        console.error("toggleTestLive DB error:", error);
+        alert(`テスト配信の切り替えに失敗しました: ${error.message}`);
+        return;
+      }
+
       // テスト配信変更をブロードキャスト
       const channel = supabase.channel(`schedule:${schedule.slug}:status`);
       await channel.subscribe();
@@ -310,8 +316,12 @@ export default function ScheduleDetailPage() {
       });
       supabase.removeChannel(channel);
       await loadSchedule();
+    } catch (err) {
+      console.error("toggleTestLive error:", err);
+      alert(`エラーが発生しました: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setIsUpdating(false);
     }
-    setIsUpdating(false);
   }
 
   // --- スケジュール情報保存 ---
