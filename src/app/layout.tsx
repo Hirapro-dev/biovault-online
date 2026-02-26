@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
+import { ThemeProvider } from "next-themes";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 
@@ -23,10 +24,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ja">
+    <html lang="ja" suppressHydrationWarning>
       <body className={inter.className}>
-        {children}
-        <Toaster />
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+          {children}
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   );

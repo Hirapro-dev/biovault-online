@@ -520,9 +520,10 @@ export default function ScheduleDetailPage() {
               )}
               {!schedule.is_test_live && testPageOpened && (
                 <Button
-                  onClick={toggleTestLive}
+                  onClick={() => toggleTestLive()}
                   disabled={isUpdating}
-                  className="gap-2 bg-amber-600 hover:bg-amber-700 text-white"
+                  variant="default"
+                  className="gap-2 bg-amber-600 hover:bg-amber-700 text-white border-0"
                 >
                   <Play className="h-4 w-4" />
                   テスト配信開始

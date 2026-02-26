@@ -9,16 +9,17 @@ import {
   LayoutDashboard,
   Users,
   Radio,
-  MessageSquare,
   LogOut,
   Menu,
   X,
+  Settings,
 } from "lucide-react";
 
 const navItems = [
   { href: "/admin", label: "ダッシュボード", icon: LayoutDashboard },
   { href: "/admin/customers", label: "顧客管理", icon: Users },
   { href: "/admin/schedules", label: "スケジュール", icon: Radio },
+  { href: "/admin/settings", label: "設定", icon: Settings },
 ];
 
 export default function AdminLayout({
@@ -95,7 +96,7 @@ export default function AdminLayout({
   return (
     <div className="flex min-h-screen">
       {/* サイドバー（デスクトップ） */}
-      <aside className="hidden w-64 border-r bg-slate-50 lg:block">
+      <aside className="hidden w-64 border-r bg-muted/50 lg:block">
         <div className="flex h-full flex-col">
           <div className="border-b p-4">
             <h2 className="text-lg font-bold">管理画面</h2>
@@ -154,7 +155,7 @@ export default function AdminLayout({
 
         {/* モバイルメニュー */}
         {mobileMenuOpen && (
-          <nav className="border-b bg-white p-4 lg:hidden">
+          <nav className="border-b bg-background p-4 lg:hidden">
             {navItems.map((item) => {
               const isActive = pathname === item.href;
               return (
