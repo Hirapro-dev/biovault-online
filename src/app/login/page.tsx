@@ -55,13 +55,13 @@ export default function LoginPage() {
         loop
         muted
         playsInline
-        className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-40"
+        className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-95"
       >
         <source src="/login-bg.mp4" type="video/mp4" />
       </video>
 
       {/* 動画の上に暗めのオーバーレイ（グラデーションとの馴染み） */}
-      <div className="pointer-events-none absolute inset-0 bg-[#050a0e]/50" />
+      <div className="pointer-events-none absolute inset-0 bg-[#000000]/30" />
 
       {/* 背景：斜めの光線エフェクト（動画の上に重なる） */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -102,7 +102,7 @@ export default function LoginPage() {
         {/* ティールのボーダーグロー */}
         <div className="absolute -inset-[1px] rounded-2xl bg-gradient-to-b from-teal-400/40 via-cyan-400/20 to-teal-400/30" />
 
-        <div className="relative rounded-2xl bg-[#0a1118]/90 px-8 py-12 shadow-2xl shadow-teal-900/10 backdrop-blur-xl sm:px-12 sm:py-16">
+        <div className="relative rounded-2xl bg-[#050a0e]/90 px-8 py-12 shadow-2xl shadow-teal-900/10 backdrop-blur-xl sm:px-12 sm:py-16">
           {/* ロゴ */}
           <div className="mb-8 flex flex-col items-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}

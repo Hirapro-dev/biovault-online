@@ -136,7 +136,7 @@ export function StreamContainer({
   return (
     <div
       ref={videoAreaRef}
-      className={`relative w-full bg-[#050a0e] ${isFullscreen ? "h-screen" : "aspect-video"}`}
+      className={`relative w-full bg-[#050a0e] border border-teal-500/30 rounded-lg overflow-hidden ${isFullscreen ? "h-screen border-0 rounded-none" : "aspect-video"}`}
     >
       {/* テストモード: is_test_live で表示制御 */}
       {isTestMode && isTestLive && schedule.zoom_meeting_number && (
