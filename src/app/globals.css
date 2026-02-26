@@ -34,7 +34,13 @@
   }
 }
 
-/* iOS Safari: inputフォーカス時の自動ズームを防止 */
+/* モバイル: ピンチズーム・ダブルタップズームを防止 */
+html {
+  touch-action: pan-x pan-y;
+  -ms-touch-action: pan-x pan-y;
+}
+
+/* iOS Safari: inputフォーカス時の自動ズームを防止（16px未満で発動するため） */
 @supports (-webkit-touch-callout: none) {
   input,
   textarea,

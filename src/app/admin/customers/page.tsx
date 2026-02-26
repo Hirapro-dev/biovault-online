@@ -291,7 +291,7 @@ export default function CustomersPage() {
                   再生成
                 </Button>
               </div>
-              <p className="text-xs text-muted-foreground">苗字ローマ字＋ランダム英数字6桁。手入力での変更も可能です</p>
+              <p className="text-xs text-muted-foreground">苗字ローマ字＋数字4桁。手入力での変更も可能です</p>
             </div>
             <div className="space-y-2">
               <Label>メモ</Label>

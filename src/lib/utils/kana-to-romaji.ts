@@ -104,21 +104,17 @@ export function generateCustomerIdFromKana(nameKana: string): string {
   const familyNameKana = parts[0] || "";
   const romaji = kanaToRomaji(familyNameKana);
 
-  if (!romaji) return generateRandomId();
+  if (!romaji) return generateRandomDigits();
 
-  // ローマ字 + ランダム英数字6桁
-  const random = generateRandomId();
-  return `${romaji}${random}`;
+  // ローマ字 + ランダム数字4桁
+  const digits = generateRandomDigits();
+  return `${romaji}${digits}`;
 }
 
 /**
- * ランダム英数字6桁を生成
+ * ランダム数字4桁を生成
  */
-function generateRandomId(): string {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
-  let result = "";
-  for (let i = 0; i < 6; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return result;
+function generateRandomDigits(): string {
+  const num = Math.floor(Math.random() * 10000);
+  return String(num).padStart(4, "0");
 }
