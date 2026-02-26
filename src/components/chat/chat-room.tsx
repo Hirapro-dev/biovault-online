@@ -28,7 +28,7 @@ export function ChatRoom({ scheduleId, scheduleSlug, customerId }: ChatRoomProps
   const [input, setInput] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const supabase = createClient();
@@ -86,7 +86,10 @@ export function ChatRoom({ scheduleId, scheduleSlug, customerId }: ChatRoomProps
   }, [scheduleId, scheduleSlug, customerId]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    const container = messagesContainerRef.current;
+    if (container) {
+      container.scrollTop = container.scrollHeight;
+    }
   }, [messages]);
 
   const sendMessage = useCallback(async () => {
@@ -110,35 +113,34 @@ export function ChatRoom({ scheduleId, scheduleSlug, customerId }: ChatRoomProps
   return (
     <div className="flex h-full flex-col">
       {/* ヘッダー */}
-      <div className="flex items-center justify-between border-b border-slate-700/50 px-4 py-3">
+      <div className="flex items-center justify-between border-b border-teal-500/10 px-4 py-3">
         <h3 className="text-sm font-semibold text-white">チャット</h3>
       </div>
 
       {/* メッセージ */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-1.5">
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-3 space-y-1.5">
         {messages.length === 0 && (
           <div className="flex h-full items-center justify-center">
             <p className="text-xs text-slate-500">チャットメッセージはここに表示されます</p>
           </div>
         )}
         {messages.map((msg) => (
-          <div key={msg.id} className="group rounded px-2 py-1.5 hover:bg-slate-800/50">
+          <div key={msg.id} className="group rounded px-2 py-1.5 hover:bg-teal-500/5">
             <p className="text-sm text-slate-200">{msg.content}</p>
-            <p className="text-xs font-medium text-slate-400">{msg.display_name}</p>
+            <p className="text-xs font-medium text-teal-300/50">{msg.display_name}</p>
           </div>
         ))}
-        <div ref={messagesEndRef} />
       </div>
 
       {/* 入力 */}
-      <div className="border-t border-slate-700/50 p-3 space-y-2">
+      <div className="border-t border-teal-500/10 p-3 space-y-2">
         <Input
           value={displayName}
           onChange={(e) => setDisplayName(e.target.value)}
           placeholder="名前（匿名も可能です）"
           maxLength={30}
           disabled={!isConnected}
-          className="border-slate-700 bg-slate-800 text-sm text-white placeholder:text-slate-500"
+          className="border-teal-500/15 bg-[#0d1520] text-sm text-white placeholder:text-slate-500 focus-visible:ring-1 focus-visible:ring-teal-500/30"
         />
         <div className="flex gap-2">
           <Input
@@ -148,13 +150,13 @@ export function ChatRoom({ scheduleId, scheduleSlug, customerId }: ChatRoomProps
             placeholder="メッセージを入力..."
             maxLength={500}
             disabled={!isConnected}
-            className="border-slate-700 bg-slate-800 text-sm text-white placeholder:text-slate-500"
+            className="border-teal-500/15 bg-[#0d1520] text-sm text-white placeholder:text-slate-500 focus-visible:ring-1 focus-visible:ring-teal-500/30"
           />
           <Button
             onClick={sendMessage}
             disabled={!input.trim() || isSending || !isConnected}
             size="icon"
-            className="shrink-0 bg-blue-600 hover:bg-blue-700"
+            className="shrink-0 bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-500 hover:to-cyan-500 shadow-lg shadow-teal-900/20"
           >
             <Send className="h-4 w-4" />
           </Button>

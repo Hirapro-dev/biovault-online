@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import type { Schedule, StreamStatus } from "@/types";
-import { Clock, Radio, Maximize, Minimize } from "lucide-react";
+import { Radio, Maximize, Minimize } from "lucide-react";
 
 interface StreamContainerProps {
   schedule: Schedule;
@@ -118,7 +118,7 @@ export function StreamContainer({
   return (
     <div
       ref={videoAreaRef}
-      className={`relative w-full bg-black ${isFullscreen ? "h-screen" : "aspect-video"}`}
+      className={`relative w-full bg-[#050a0e] ${isFullscreen ? "h-screen" : "aspect-video"}`}
     >
       {/* テストモード: is_test_live で表示制御 */}
       {isTestMode && isTestLive && schedule.zoom_meeting_number && (
@@ -131,8 +131,10 @@ export function StreamContainer({
       )}
       {isTestMode && isTestLive && !schedule.zoom_meeting_number && (
         <div className="flex h-full items-center justify-center text-white">
-          <div className="text-center">
-            <Radio className="mx-auto mb-4 h-16 w-16 animate-pulse text-amber-500" />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/video-bg.png" alt="" className="absolute inset-0 h-full w-full object-cover" />
+          <div className="relative z-10 text-center">
+            <Radio className="mx-auto mb-4 h-16 w-16 animate-pulse text-teal-400" />
             <p className="text-xl font-semibold">テスト配信中</p>
             <p className="mt-2 text-sm text-slate-400">Zoom設定がされていません。管理画面で設定してください。</p>
           </div>
@@ -140,8 +142,11 @@ export function StreamContainer({
       )}
       {isTestMode && !isTestLive && (
         <div className="flex h-full items-center justify-center text-white">
-          <div className="text-center">
-            <Clock className="mx-auto mb-4 h-16 w-16 text-slate-500" />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/video-bg.png" alt="" className="absolute inset-0 h-full w-full object-cover" />
+          <div className="relative z-10 text-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.png" alt="BioVault" className="mx-auto mb-6 h-8 w-auto object-contain drop-shadow-[0_0_15px_rgba(94,234,212,0.25)]" />
             <p className="text-xl font-semibold">テスト配信待機中</p>
             <p className="mt-2 text-sm text-slate-400">管理画面で「テスト配信」を開始してください</p>
             <p className="mt-1 text-xs text-slate-500">開始すると自動で切り替わります</p>
@@ -155,14 +160,19 @@ export function StreamContainer({
           {schedule.waiting_image_url && schedule.waiting_image_url !== "/waiting.jpg" ? (
             <Image src={schedule.waiting_image_url} alt="配信前" fill className="object-cover" priority />
           ) : (
-            <div className="text-center text-white">
-              <Clock className="mx-auto mb-4 h-16 w-16 text-slate-500" />
-              <p className="text-xl font-semibold">まもなく配信が始まります</p>
-              <p className="mt-2 text-sm text-slate-400">
-                開始時刻: {new Date(schedule.scheduled_start).toLocaleString("ja-JP")}
-              </p>
-              <p className="mt-1 text-xs text-slate-500">開始時に自動で切り替わります</p>
-            </div>
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/video-bg.png" alt="" className="absolute inset-0 h-full w-full object-cover" />
+              <div className="relative z-10 text-center text-white">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/logo.png" alt="BioVault" className="mx-auto mb-6 h-8 w-auto object-contain drop-shadow-[0_0_15px_rgba(94,234,212,0.25)]" />
+                <p className="text-base md:text-lg font-semibold">配信時間まで今しばらくお待ちください</p>
+                <p className="mt-2 text-sm text-slate-400">
+                  開始時刻: {new Date(schedule.scheduled_start).toLocaleString("ja-JP")}
+                </p>
+                <p className="mt-1 text-xs text-slate-500">開始時に自動で切り替わります</p>
+              </div>
+            </>
           )}
         </div>
       )}
@@ -177,8 +187,10 @@ export function StreamContainer({
       )}
       {!isTestMode && status === "live" && !schedule.zoom_meeting_number && (
         <div className="flex h-full items-center justify-center text-white">
-          <div className="text-center">
-            <Radio className="mx-auto mb-4 h-16 w-16 animate-pulse text-red-500" />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/video-bg.png" alt="" className="absolute inset-0 h-full w-full object-cover" />
+          <div className="relative z-10 text-center">
+            <Radio className="mx-auto mb-4 h-16 w-16 animate-pulse text-teal-400" />
             <p className="text-xl font-semibold">配信中</p>
             <p className="mt-2 text-sm text-slate-400">準備中です。しばらくお待ちください。</p>
           </div>
@@ -190,10 +202,16 @@ export function StreamContainer({
           {schedule.ended_image_url && schedule.ended_image_url !== "/ended.jpg" ? (
             <Image src={schedule.ended_image_url} alt="配信終了" fill className="object-cover" priority />
           ) : (
-            <div className="text-center text-white">
-              <p className="text-xl font-semibold">配信は終了しました</p>
-              <p className="mt-2 text-sm text-slate-400">ご視聴ありがとうございました。</p>
-            </div>
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/video-bg.png" alt="" className="absolute inset-0 h-full w-full object-cover" />
+              <div className="relative z-10 text-center text-white">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/logo.png" alt="BioVault" className="mx-auto mb-6 h-8 w-auto object-contain drop-shadow-[0_0_15px_rgba(94,234,212,0.25)]" />
+                <p className="text-xl font-semibold">配信は終了しました</p>
+                <p className="mt-2 text-sm text-slate-400">ご視聴ありがとうございました。</p>
+              </div>
+            </>
           )}
         </div>
       )}
@@ -201,7 +219,7 @@ export function StreamContainer({
       {/* 最大化 / 最小化ボタン */}
       <button
         onClick={toggleFullscreen}
-        className="absolute right-3 top-3 z-20 rounded bg-black/60 p-1.5 text-white transition-colors hover:bg-black/80"
+        className="absolute right-3 top-3 z-20 rounded bg-black/60 p-1.5 text-white transition-colors hover:bg-teal-900/60"
         title={isFullscreen ? "最小化" : "最大化"}
       >
         {isFullscreen ? (
