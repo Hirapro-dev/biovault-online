@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Plus, ExternalLink, Copy, Check } from "lucide-react";
+import { Plus, ExternalLink, Copy, Check, Trash2 } from "lucide-react";
 import type { Schedule } from "@/types";
 
 function slugify(): string {
@@ -57,6 +57,18 @@ export default function SchedulesPage() {
       load();
     }
     setIsLoading(false);
+  }
+
+  async function handleDelete(id: string, title: string) {
+    if (!confirm(`「${title}」を削除しますか？\n\n関連するアクセスログ・視聴セッション・チャットメッセージもすべて削除されます。`)) return;
+    const supabase = createClient();
+    // 関連データを先に削除
+    await supabase.from("chat_messages").delete().eq("schedule_id", id);
+    await supabase.from("viewer_sessions").delete().eq("schedule_id", id);
+    await supabase.from("viewer_access_logs").delete().eq("schedule_id", id);
+    // スケジュール本体を削除
+    await supabase.from("schedules").delete().eq("id", id);
+    load();
   }
 
   function copyUrl(slug: string) {
@@ -136,7 +148,18 @@ export default function SchedulesPage() {
                   </button>
                 </div>
               </div>
-              <ExternalLink className="h-4 w-4 text-muted-foreground" />
+              <div className="flex items-center gap-1">
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-8 w-8 text-destructive hover:text-destructive"
+                  onClick={e => { e.stopPropagation(); handleDelete(s.id, s.title); }}
+                  title="削除"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+                <ExternalLink className="h-4 w-4 text-muted-foreground" />
+              </div>
             </CardContent>
           </Card>
         ))}

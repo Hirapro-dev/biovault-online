@@ -234,18 +234,22 @@ export function StreamContainer({
         </div>
       )}
 
-      {/* 最大化 / 最小化ボタン */}
-      <button
-        onClick={toggleFullscreen}
-        className="absolute right-3 top-3 z-20 rounded bg-black/60 p-1.5 text-white transition-colors hover:bg-teal-900/60"
-        title={isFullscreen ? "最小化" : "最大化"}
-      >
-        {isFullscreen ? (
-          <Minimize className="h-4 w-4" />
-        ) : (
-          <Maximize className="h-4 w-4" />
-        )}
-      </button>
+      {/* 最大化 / 最小化ボタン（iframeより確実に上に配置） */}
+      <div className="absolute right-2 top-2 z-[9999]" style={{ pointerEvents: "auto" }}>
+        <button
+          onClick={(e) => { e.stopPropagation(); toggleFullscreen(); }}
+          onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); toggleFullscreen(); }}
+          className="rounded-lg bg-black/70 p-2.5 text-white shadow-lg transition-colors hover:bg-teal-900/60 active:bg-teal-800/80"
+          title={isFullscreen ? "最小化" : "最大化"}
+          aria-label={isFullscreen ? "最小化" : "最大化"}
+        >
+          {isFullscreen ? (
+            <Minimize className="h-5 w-5" />
+          ) : (
+            <Maximize className="h-5 w-5" />
+          )}
+        </button>
+      </div>
     </div>
   );
 }

@@ -140,7 +140,7 @@ export function ChatRoom({ scheduleId, scheduleSlug, customerId }: ChatRoomProps
           placeholder="名前（匿名も可能です）"
           maxLength={30}
           disabled={!isConnected}
-          className="border-teal-500/15 bg-[#0d1520] text-sm text-white placeholder:text-slate-500 focus-visible:ring-1 focus-visible:ring-teal-500/30"
+          className="border-teal-500/15 bg-[#0d1520] text-base text-white placeholder:text-slate-500 focus-visible:ring-1 focus-visible:ring-teal-500/30"
         />
         <div className="flex gap-2">
           <Input
@@ -150,7 +150,7 @@ export function ChatRoom({ scheduleId, scheduleSlug, customerId }: ChatRoomProps
             placeholder="メッセージを入力..."
             maxLength={500}
             disabled={!isConnected}
-            className="border-teal-500/15 bg-[#0d1520] text-sm text-white placeholder:text-slate-500 focus-visible:ring-1 focus-visible:ring-teal-500/30"
+            className="border-teal-500/15 bg-[#0d1520] text-base text-white placeholder:text-slate-500 focus-visible:ring-1 focus-visible:ring-teal-500/30"
           />
           <Button
             onClick={sendMessage}
