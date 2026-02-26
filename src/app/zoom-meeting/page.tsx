@@ -93,13 +93,17 @@ function ZoomMeetingContent() {
                 console.log("Zoom Webinar: joined successfully");
                 setIsLoading(false);
 
-                // 参加成功後にDOM検査 + UI非表示
+                // 参加成功後にDOM検査 + UI非表示（繰り返し実行）
                 setTimeout(() => {
                   logZoomDOM();
                   hideUIElements();
-                }, 3000);
+                }, 2000);
+                setTimeout(() => hideUIElements(), 4000);
                 setTimeout(() => hideUIElements(), 6000);
                 setTimeout(() => hideUIElements(), 10000);
+                setTimeout(() => hideUIElements(), 15000);
+                // 定期的にUIを非表示にし続ける（SDK再表示対策）
+                setInterval(() => hideUIElements(), 5000);
               },
               error: (err: any) => {
                 console.error("Zoom join error:", err);
@@ -175,14 +179,26 @@ function ZoomMeetingContent() {
       ".sharee-sharing-indicator",           // 「You are viewing」バナー
       "#sharingViewOptions",                 // View Options
       ".full-screen-view-dropdown",          // フルスクリーンドロップダウン
+      "#wc-footer",                          // フッター
+      ".footer",                             // フッター
       ".WCL-footer-more-btn-container",      // フッターMoreボタン
+      "#wc-header",                          // ヘッダー
+      "#meeting-header",                     // ミーティングヘッダー
+      ".meeting-info-container",             // ミーティング情報
       ".right-panel-portal",                 // 右パネル
       ".sharer-controlbar-container",        // 共有コントロールバー
-      ".suspension-window-container",        // セルフビデオコンテナ（※.react-draggableは使わない！画面共有も同クラスを持つため）
+      ".suspension-window-container",        // セルフビデオコンテナ
       ".single-suspension-container__self-video", // セルフビデオ本体
+      ".speaker-active-container__wrap",     // スピーカービュー小窓
+      ".speaker-bar-container",              // スピーカーバー
+      ".gallery-video-container__wrap",      // ギャラリービュー
+      ".sharing-layout-video-list",          // 画面共有時のビデオリスト
+      ".sharee-container__side-panel",       // サイドパネル
+      ".active-speaker-video",              // アクティブスピーカー
       ".ReactModalPortal",                   // モーダル
       ".global-pop-up-box",                  // ポップアップ
       "#aria-notify-area",                   // 通知エリア
+      ".ax-outline",                         // ツールバーアウトライン
     ];
 
     selectorsToHide.forEach((selector) => {
@@ -255,7 +271,7 @@ function ZoomMeetingContent() {
         z-index: -1;
       }
 
-      /* === DOMログで確認済みの要素 === */
+      /* === ヘッダー・ツールバー・Leaveボタン完全非表示 === */
 
       /* 画面共有インジケーター「You are viewing」バナー */
       .sharee-sharing-indicator {
@@ -269,18 +285,47 @@ function ZoomMeetingContent() {
         display: none !important;
       }
 
-      /* フッター */
+      /* フッター（全パターン） */
       #wc-footer,
-      .WCL-footer-more-btn-container {
+      .footer,
+      .footer__inner,
+      .WCL-footer-more-btn-container,
+      [class*="footer-button"],
+      [class*="footer__footer"] {
         display: none !important;
         height: 0 !important;
+        max-height: 0 !important;
+        overflow: hidden !important;
       }
 
-      /* ヘッダー */
+      /* ヘッダー・ツールバー・Leaveボタン */
       #wc-header,
       #meeting-header,
       .meeting-info-container,
-      .meeting-info-container--left-side {
+      .meeting-info-container--left-side,
+      .meeting-app__header,
+      [class*="meeting-header"],
+      [class*="header-button"],
+      .ax-outline,
+      .ax-outline-blue {
+        display: none !important;
+        height: 0 !important;
+        max-height: 0 !important;
+      }
+
+      /* Leaveボタン（赤い）を直接非表示 */
+      [class*="leave-meeting"],
+      [class*="LeaveButton"],
+      button[title="Leave"],
+      button[aria-label="Leave"],
+      .leave-btn,
+      .footer-leave-btn,
+      .meeting-info-icon__leave-icon {
+        display: none !important;
+      }
+
+      /* 上部ツールバー全体 */
+      .meeting-app > div:first-child:not(.meeting-client) {
         display: none !important;
         height: 0 !important;
       }
@@ -291,10 +336,24 @@ function ZoomMeetingContent() {
         display: none !important;
       }
 
-      /* セルフビデオ（※.react-draggableは画面共有にも付くので使わない！） */
+      /* セルフビデオ・スピーカーサムネイル（画面共有時に表示される小窓） */
       .suspension-window-container,
-      .single-suspension-container__self-video {
+      .single-suspension-container__self-video,
+      [class*="suspension-window"],
+      [class*="self-video"],
+      .speaker-active-container__wrap,
+      .speaker-bar-container,
+      [class*="speaker-bar"],
+      [class*="avatar-list"],
+      .active-speaker-video,
+      .gallery-video-container__wrap,
+      .sharing-layout-video-list,
+      [class*="video-avatar"],
+      .sharee-container__side-panel {
         display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+        overflow: hidden !important;
       }
 
       /* 字幕 */
@@ -313,6 +372,16 @@ function ZoomMeetingContent() {
         height: 100vh !important;
       }
 
+      /* 画面共有コンテンツを全画面に拡大 */
+      .sharee-container,
+      .sharee-container__viewport,
+      .sharing-layout-container {
+        width: 100vw !important;
+        height: 100vh !important;
+        position: fixed !important;
+        inset: 0 !important;
+      }
+
       /* canvas/video全画面 */
       #zmmtg-root canvas,
       #zmmtg-root video {
@@ -324,7 +393,7 @@ function ZoomMeetingContent() {
         box-shadow: none !important;
       }
 
-      /* 通知・モーダル */
+      /* 通知・モーダル・ポップアップ */
       .join-audio-by-voip,
       .audio-notice-container,
       .notification-container,
@@ -334,7 +403,9 @@ function ZoomMeetingContent() {
       .zm-modal,
       .zm-modal-legacy,
       .join-dialog,
-      .join-audio-container {
+      .join-audio-container,
+      [class*="notification"],
+      [class*="toast"] {
         display: none !important;
       }
 

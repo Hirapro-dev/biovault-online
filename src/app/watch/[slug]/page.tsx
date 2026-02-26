@@ -3,6 +3,10 @@ import { redirect } from "next/navigation";
 import type { Schedule } from "@/types";
 import { WatchPage } from "./watch-page";
 
+// キャッシュを無効化し、毎回最新データを取得する
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 interface PageProps {
   params: { slug: string };
   searchParams: { mode?: string };

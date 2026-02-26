@@ -49,6 +49,24 @@ export function StreamContainer({
     return () => document.removeEventListener("fullscreenchange", onFullscreenChange);
   }, []);
 
+  // マウント時にDBから最新ステータスを取得（キャッシュ対策）
+  useEffect(() => {
+    async function fetchLatestStatus() {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from("schedules")
+        .select("status, actual_start, is_test_live")
+        .eq("id", schedule.id)
+        .single();
+      if (data) {
+        setStatus(data.status as StreamStatus);
+        setActualStart(data.actual_start);
+        if (typeof data.is_test_live === "boolean") setIsTestLive(data.is_test_live);
+      }
+    }
+    fetchLatestStatus();
+  }, [schedule.id]);
+
   // 配信ステータスのリアルタイム監視
   useEffect(() => {
     const supabase = createClient();
@@ -80,9 +98,9 @@ export function StreamContainer({
     return () => clearTimeout(timer);
   }, [status, actualStart, schedule.auto_end_hours]);
 
-  // 視聴セッション記録
+  // 視聴セッション記録（テストモードではスキップ）
   useEffect(() => {
-    if (status !== "live") return;
+    if (status !== "live" || isTestMode) return;
     const supabase = createClient();
     let sessionId: string | null = null;
 
