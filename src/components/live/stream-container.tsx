@@ -151,12 +151,17 @@ export function StreamContainer({
     };
   }, [status, customerId, schedule.id]);
 
+  // iframeのクラスを疑似フルスクリーン時に切り替え
+  const iframeClass = isFullscreen
+    ? "w-full h-full border-0"
+    : "absolute inset-0 h-full w-full border-0";
+
   return (
     <div
       ref={videoAreaRef}
       className={
         isFullscreen
-          ? "fixed inset-0 z-[9998] w-full h-full bg-black overflow-hidden"
+          ? "fixed inset-0 z-[9998] flex items-center justify-center bg-black overflow-hidden"
           : "relative w-full bg-[#050a0e] border border-teal-500/30 rounded-lg overflow-hidden aspect-video"
       }
     >
@@ -165,7 +170,7 @@ export function StreamContainer({
         <iframe
           src={`/zoom-meeting?meetingNumber=${encodeURIComponent(schedule.zoom_meeting_number)}&password=${encodeURIComponent(schedule.zoom_password || "")}&userName=${encodeURIComponent(customerName)}`}
           allow="camera; microphone; display-capture; autoplay; fullscreen"
-          className="absolute inset-0 h-full w-full border-0"
+          className={iframeClass}
           title="Zoom Test Stream"
         />
       )}
@@ -221,7 +226,7 @@ export function StreamContainer({
         <iframe
           src={`/zoom-meeting?meetingNumber=${encodeURIComponent(schedule.zoom_meeting_number)}&password=${encodeURIComponent(schedule.zoom_password || "")}&userName=${encodeURIComponent(customerName)}`}
           allow="camera; microphone; display-capture; autoplay; fullscreen"
-          className="absolute inset-0 h-full w-full border-0"
+          className={iframeClass}
           title="Zoom Live Stream"
         />
       )}

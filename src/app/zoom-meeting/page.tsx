@@ -380,14 +380,25 @@ function ZoomMeetingContent() {
         height: 100vh !important;
         position: fixed !important;
         inset: 0 !important;
+        top: 0 !important;
+        left: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
       }
 
-      /* canvas/video全画面 */
+      /* canvas/video全画面 — 中央揃え */
       #zmmtg-root canvas,
       #zmmtg-root video {
         max-width: 100vw !important;
         max-height: 100vh !important;
+        width: auto !important;
+        height: auto !important;
         object-fit: contain !important;
+        margin: auto !important;
+        display: block !important;
         border: none !important;
         outline: none !important;
         box-shadow: none !important;
