@@ -12,12 +12,13 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, ExternalLink, Copy, Check } from "lucide-react";
 import type { Schedule } from "@/types";
 
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/[^a-z0-9\u3000-\u9fff]+/g, "-")
-    .replace(/^-|-$/g, "")
-    .slice(0, 50) + "-" + Date.now().toString(36);
+function slugify(): string {
+  const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+  let id = "";
+  for (let i = 0; i < 8; i++) {
+    id += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return id + "-" + Date.now().toString(36);
 }
 
 export default function SchedulesPage() {
@@ -40,7 +41,7 @@ export default function SchedulesPage() {
     if (!form.title || !form.scheduled_start) return;
     setIsLoading(true);
     const supabase = createClient();
-    const slug = slugify(form.title);
+    const slug = slugify();
     const { error } = await supabase.from("schedules").insert({
       title: form.title,
       speaker: form.speaker || null,

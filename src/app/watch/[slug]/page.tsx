@@ -5,9 +5,10 @@ import { WatchPage } from "./watch-page";
 
 interface PageProps {
   params: { slug: string };
+  searchParams: { mode?: string };
 }
 
-export default async function WatchSlugPage({ params }: PageProps) {
+export default async function WatchSlugPage({ params, searchParams }: PageProps) {
   const supabase = createServiceRoleClient();
 
   // スケジュールをslugで取得
@@ -21,5 +22,7 @@ export default async function WatchSlugPage({ params }: PageProps) {
     redirect("/login");
   }
 
-  return <WatchPage schedule={schedule as Schedule} />;
+  const isTestMode = searchParams.mode === "test";
+
+  return <WatchPage schedule={schedule as Schedule} isTestMode={isTestMode} />;
 }

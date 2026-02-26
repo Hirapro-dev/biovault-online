@@ -136,7 +136,7 @@ export default function AdminLayout({
       </aside>
 
       {/* モバイルヘッダー */}
-      <div className="flex flex-1 flex-col">
+      <div className="flex flex-1 flex-col min-w-0">
         <header className="flex items-center justify-between border-b px-4 py-3 lg:hidden">
           <h2 className="text-lg font-bold">管理画面</h2>
           <Button
@@ -185,7 +185,7 @@ export default function AdminLayout({
         )}
 
         {/* メインコンテンツ */}
-        <main className="flex-1 overflow-y-auto p-6">{children}</main>
+        <main className="flex-1 overflow-y-auto p-3 sm:p-6 min-w-0">{children}</main>
       </div>
     </div>
   );

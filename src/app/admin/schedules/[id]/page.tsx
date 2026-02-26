@@ -28,6 +28,7 @@ import {
   Pencil,
   Save,
   X as XIcon,
+  FlaskConical,
 } from "lucide-react";
 import type {
   Schedule,
@@ -99,6 +100,7 @@ export default function ScheduleDetailPage() {
   // UI State
   const [isLoading, setIsLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [copiedTest, setCopiedTest] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [editZoom, setEditZoom] = useState({ meeting_number: "", password: "" });
   const [activeTab, setActiveTab] = useState<"overview" | "access" | "sessions" | "chat">("overview");
@@ -284,6 +286,33 @@ export default function ScheduleDetailPage() {
     setIsUpdating(false);
   }
 
+  // --- テスト配信 ON/OFF ---
+  async function toggleTestLive() {
+    if (!schedule) return;
+    setIsUpdating(true);
+    const supabase = createClient();
+    const newValue = !schedule.is_test_live;
+
+    const { error } = await supabase
+      .from("schedules")
+      .update({ is_test_live: newValue })
+      .eq("id", scheduleId);
+
+    if (!error) {
+      // テスト配信変更をブロードキャスト
+      const channel = supabase.channel(`schedule:${schedule.slug}:status`);
+      await channel.subscribe();
+      await channel.send({
+        type: "broadcast",
+        event: "test_live_change",
+        payload: { is_test_live: newValue },
+      });
+      supabase.removeChannel(channel);
+      await loadSchedule();
+    }
+    setIsUpdating(false);
+  }
+
   // --- スケジュール情報保存 ---
   async function saveScheduleInfo() {
     if (!schedule) return;
@@ -385,6 +414,15 @@ export default function ScheduleDetailPage() {
     setTimeout(() => setCopied(false), 1500);
   }
 
+  // --- テストURLコピー ---
+  function copyTestUrl() {
+    if (!schedule) return;
+    const url = `${window.location.origin}/watch/${schedule.slug}?mode=test`;
+    navigator.clipboard.writeText(url);
+    setCopiedTest(true);
+    setTimeout(() => setCopiedTest(false), 1500);
+  }
+
   // --- ローディング ---
   if (isLoading || !schedule) {
     return (
@@ -463,7 +501,16 @@ export default function ScheduleDetailPage() {
             </div>
 
             {/* 配信操作 */}
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
+              <Button
+                onClick={toggleTestLive}
+                disabled={isUpdating}
+                variant={schedule.is_test_live ? "destructive" : "outline"}
+                className="gap-2"
+              >
+                <FlaskConical className="h-4 w-4" />
+                {schedule.is_test_live ? "テスト配信停止" : "テスト配信"}
+              </Button>
               {schedule.status === "upcoming" && (
                 <Button
                   onClick={() => changeStatus("live")}
@@ -501,8 +548,47 @@ export default function ScheduleDetailPage() {
         </CardContent>
       </Card>
 
+      {/* テスト配信URL */}
+      {schedule.is_test_live && (
+        <Card className="border-amber-500/50 bg-amber-50 dark:bg-amber-950/20">
+          <CardContent className="p-4">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex-1 space-y-1">
+                <p className="text-xs font-medium text-amber-600">テスト配信URL（テスト配信中のみ有効）</p>
+                <div className="flex items-center gap-2">
+                  <FlaskConical className="h-4 w-4 text-amber-600" />
+                  <code className="text-sm font-mono">
+                    /watch/{schedule.slug}?mode=test
+                  </code>
+                  <button
+                    onClick={copyTestUrl}
+                    className="rounded p-1 hover:bg-amber-200/50"
+                    title="テストURLをコピー"
+                  >
+                    {copiedTest ? (
+                      <Check className="h-4 w-4 text-green-600" />
+                    ) : (
+                      <Copy className="h-4 w-4 text-amber-600" />
+                    )}
+                  </button>
+                  <a
+                    href={`/watch/${schedule.slug}?mode=test`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded p-1 hover:bg-amber-200/50"
+                    title="テストページを開く"
+                  >
+                    <ExternalLink className="h-4 w-4 text-amber-600" />
+                  </a>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* サマリーカード */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">アクセス数</CardTitle>
@@ -554,25 +640,27 @@ export default function ScheduleDetailPage() {
       </div>
 
       {/* タブ切り替え */}
-      <div className="flex gap-1 rounded-lg border bg-muted/30 p-1">
-        {[
-          { key: "overview" as const, label: "基本情報" },
-          { key: "access" as const, label: `アクセスログ (${accessLogs.length})` },
-          { key: "sessions" as const, label: `視聴セッション (${sessions.length})` },
-          { key: "chat" as const, label: `チャット (${chatMessages.filter((m) => m.status === "pending").length})` },
-        ].map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-              activeTab === tab.key
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
+      <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0">
+        <div className="flex gap-1 rounded-lg border bg-muted/30 p-1 min-w-max sm:min-w-0">
+          {[
+            { key: "overview" as const, label: "基本情報" },
+            { key: "access" as const, label: `アクセスログ (${accessLogs.length})` },
+            { key: "sessions" as const, label: `視聴セッション (${sessions.length})` },
+            { key: "chat" as const, label: `チャット (${chatMessages.filter((m) => m.status === "pending").length})` },
+          ].map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`flex-1 whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                activeTab === tab.key
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* === 基本情報タブ === */}
@@ -807,20 +895,20 @@ export default function ScheduleDetailPage() {
               </p>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+                <table className="w-full min-w-[480px] text-sm">
                   <thead>
                     <tr className="border-b text-left">
-                      <th className="pb-2 pr-4 font-medium text-muted-foreground">顧客ID</th>
-                      <th className="pb-2 pr-4 font-medium text-muted-foreground">名前</th>
-                      <th className="pb-2 font-medium text-muted-foreground">アクセス日時</th>
+                      <th className="whitespace-nowrap pb-2 pr-4 font-medium text-muted-foreground">顧客ID</th>
+                      <th className="whitespace-nowrap pb-2 pr-4 font-medium text-muted-foreground">名前</th>
+                      <th className="whitespace-nowrap pb-2 font-medium text-muted-foreground">アクセス日時</th>
                     </tr>
                   </thead>
                   <tbody>
                     {accessLogs.map((log) => (
                       <tr key={log.id} className="border-b last:border-0">
-                        <td className="py-2 pr-4 font-mono text-xs">{log.customer_id}</td>
-                        <td className="py-2 pr-4">{log.customer?.name || "-"}</td>
-                        <td className="py-2 text-muted-foreground">{fmtDate(log.accessed_at)}</td>
+                        <td className="whitespace-nowrap py-2 pr-4 font-mono text-xs">{log.customer_id}</td>
+                        <td className="whitespace-nowrap py-2 pr-4">{log.customer?.name || "-"}</td>
+                        <td className="whitespace-nowrap py-2 text-muted-foreground">{fmtDate(log.accessed_at)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -850,28 +938,28 @@ export default function ScheduleDetailPage() {
               </p>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+                <table className="w-full min-w-[700px] text-sm">
                   <thead>
                     <tr className="border-b text-left">
-                      <th className="pb-2 pr-4 font-medium text-muted-foreground">顧客ID</th>
-                      <th className="pb-2 pr-4 font-medium text-muted-foreground">名前</th>
-                      <th className="pb-2 pr-4 font-medium text-muted-foreground">参加時刻</th>
-                      <th className="pb-2 pr-4 font-medium text-muted-foreground">退出時刻</th>
-                      <th className="pb-2 pr-4 font-medium text-muted-foreground">視聴時間</th>
-                      <th className="pb-2 font-medium text-muted-foreground">状態</th>
+                      <th className="whitespace-nowrap pb-2 pr-4 font-medium text-muted-foreground">顧客ID</th>
+                      <th className="whitespace-nowrap pb-2 pr-4 font-medium text-muted-foreground">名前</th>
+                      <th className="whitespace-nowrap pb-2 pr-4 font-medium text-muted-foreground">参加時刻</th>
+                      <th className="whitespace-nowrap pb-2 pr-4 font-medium text-muted-foreground">退出時刻</th>
+                      <th className="whitespace-nowrap pb-2 pr-4 font-medium text-muted-foreground">視聴時間</th>
+                      <th className="whitespace-nowrap pb-2 font-medium text-muted-foreground">状態</th>
                     </tr>
                   </thead>
                   <tbody>
                     {sessions.map((s) => (
                       <tr key={s.id} className="border-b last:border-0">
-                        <td className="py-2 pr-4 font-mono text-xs">{s.customer_id}</td>
-                        <td className="py-2 pr-4">{s.customer?.name || "-"}</td>
-                        <td className="py-2 pr-4 text-muted-foreground">{fmtDate(s.joined_at)}</td>
-                        <td className="py-2 pr-4 text-muted-foreground">
+                        <td className="whitespace-nowrap py-2 pr-4 font-mono text-xs">{s.customer_id}</td>
+                        <td className="whitespace-nowrap py-2 pr-4">{s.customer?.name || "-"}</td>
+                        <td className="whitespace-nowrap py-2 pr-4 text-muted-foreground">{fmtDate(s.joined_at)}</td>
+                        <td className="whitespace-nowrap py-2 pr-4 text-muted-foreground">
                           {s.left_at ? fmtDate(s.left_at) : "-"}
                         </td>
-                        <td className="py-2 pr-4">{fmtDuration(s.duration_seconds)}</td>
-                        <td className="py-2">
+                        <td className="whitespace-nowrap py-2 pr-4">{fmtDuration(s.duration_seconds)}</td>
+                        <td className="whitespace-nowrap py-2">
                           {s.is_active ? (
                             <Badge variant="destructive">視聴中</Badge>
                           ) : (
@@ -891,30 +979,28 @@ export default function ScheduleDetailPage() {
       {/* === チャットモデレーションタブ === */}
       {activeTab === "chat" && (
         <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">チャットモデレーション</CardTitle>
-              <div className="flex gap-2">
-                <div className="flex gap-1 rounded border bg-muted/30 p-0.5">
-                  {(["all", "pending", "approved"] as const).map((f) => (
-                    <button
-                      key={f}
-                      onClick={() => setChatFilter(f)}
-                      className={`rounded px-2 py-1 text-xs font-medium transition-colors ${
-                        chatFilter === f
-                          ? "bg-background shadow-sm"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      {f === "all" ? "すべて" : f === "pending" ? "未承認" : "承認済"}
-                    </button>
-                  ))}
-                </div>
-                <Button variant="outline" size="sm" onClick={loadChat} className="gap-1">
-                  <RefreshCw className="h-3 w-3" />
-                  更新
-                </Button>
+          <CardHeader className="space-y-3">
+            <CardTitle className="text-lg">チャットモデレーション</CardTitle>
+            <div className="flex items-center gap-2">
+              <div className="flex gap-1 rounded border bg-muted/30 p-0.5">
+                {(["all", "pending", "approved"] as const).map((f) => (
+                  <button
+                    key={f}
+                    onClick={() => setChatFilter(f)}
+                    className={`rounded px-3 py-1.5 text-xs font-medium transition-colors ${
+                      chatFilter === f
+                        ? "bg-background shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {f === "all" ? "すべて" : f === "pending" ? "未承認" : "承認済"}
+                  </button>
+                ))}
               </div>
+              <Button variant="outline" size="sm" onClick={loadChat} className="gap-1">
+                <RefreshCw className="h-3 w-3" />
+                更新
+              </Button>
             </div>
           </CardHeader>
           <CardContent>

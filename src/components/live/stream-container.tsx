@@ -10,14 +10,17 @@ interface StreamContainerProps {
   schedule: Schedule;
   customerId: string;
   customerName: string;
+  isTestMode?: boolean;
 }
 
 export function StreamContainer({
   schedule,
   customerId,
   customerName,
+  isTestMode = false,
 }: StreamContainerProps) {
   const [status, setStatus] = useState<StreamStatus>(schedule.status);
+  const [isTestLive, setIsTestLive] = useState(schedule.is_test_live);
   const [actualStart, setActualStart] = useState<string | null>(schedule.actual_start);
   const videoAreaRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -52,9 +55,15 @@ export function StreamContainer({
     const channel = supabase.channel(`schedule:${schedule.slug}:status`);
 
     channel.on("broadcast", { event: "status_change" }, (payload) => {
-      const p = payload.payload as { status: StreamStatus; actual_start: string | null };
+      const p = payload.payload as { status: StreamStatus; actual_start: string | null; is_test_live?: boolean };
       setStatus(p.status);
       if (p.actual_start) setActualStart(p.actual_start);
+      if (typeof p.is_test_live === "boolean") setIsTestLive(p.is_test_live);
+    });
+
+    channel.on("broadcast", { event: "test_live_change" }, (payload) => {
+      const p = payload.payload as { is_test_live: boolean };
+      setIsTestLive(p.is_test_live);
     });
 
     channel.subscribe();
@@ -111,8 +120,37 @@ export function StreamContainer({
       ref={videoAreaRef}
       className={`relative w-full bg-black ${isFullscreen ? "h-screen" : "aspect-video"}`}
     >
-      {/* 配信前: 待機画像 */}
-      {status === "upcoming" && (
+      {/* テストモード: is_test_live で表示制御 */}
+      {isTestMode && isTestLive && schedule.zoom_meeting_number && (
+        <iframe
+          src={`/zoom-meeting?meetingNumber=${encodeURIComponent(schedule.zoom_meeting_number)}&password=${encodeURIComponent(schedule.zoom_password || "")}&userName=${encodeURIComponent(customerName)}`}
+          allow="camera; microphone; display-capture; autoplay; fullscreen"
+          className="absolute inset-0 h-full w-full border-0"
+          title="Zoom Test Stream"
+        />
+      )}
+      {isTestMode && isTestLive && !schedule.zoom_meeting_number && (
+        <div className="flex h-full items-center justify-center text-white">
+          <div className="text-center">
+            <Radio className="mx-auto mb-4 h-16 w-16 animate-pulse text-amber-500" />
+            <p className="text-xl font-semibold">テスト配信中</p>
+            <p className="mt-2 text-sm text-slate-400">Zoom設定がされていません。管理画面で設定してください。</p>
+          </div>
+        </div>
+      )}
+      {isTestMode && !isTestLive && (
+        <div className="flex h-full items-center justify-center text-white">
+          <div className="text-center">
+            <Clock className="mx-auto mb-4 h-16 w-16 text-slate-500" />
+            <p className="text-xl font-semibold">テスト配信待機中</p>
+            <p className="mt-2 text-sm text-slate-400">管理画面で「テスト配信」を開始してください</p>
+            <p className="mt-1 text-xs text-slate-500">開始すると自動で切り替わります</p>
+          </div>
+        </div>
+      )}
+
+      {/* 本番モード: status で表示制御 */}
+      {!isTestMode && status === "upcoming" && (
         <div className="flex h-full items-center justify-center">
           {schedule.waiting_image_url && schedule.waiting_image_url !== "/waiting.jpg" ? (
             <Image src={schedule.waiting_image_url} alt="配信前" fill className="object-cover" priority />
@@ -129,8 +167,7 @@ export function StreamContainer({
         </div>
       )}
 
-      {/* 配信中: Zoom Client View (iframe) */}
-      {status === "live" && schedule.zoom_meeting_number && (
+      {!isTestMode && status === "live" && schedule.zoom_meeting_number && (
         <iframe
           src={`/zoom-meeting?meetingNumber=${encodeURIComponent(schedule.zoom_meeting_number)}&password=${encodeURIComponent(schedule.zoom_password || "")}&userName=${encodeURIComponent(customerName)}`}
           allow="camera; microphone; display-capture; autoplay; fullscreen"
@@ -138,7 +175,7 @@ export function StreamContainer({
           title="Zoom Live Stream"
         />
       )}
-      {status === "live" && !schedule.zoom_meeting_number && (
+      {!isTestMode && status === "live" && !schedule.zoom_meeting_number && (
         <div className="flex h-full items-center justify-center text-white">
           <div className="text-center">
             <Radio className="mx-auto mb-4 h-16 w-16 animate-pulse text-red-500" />
@@ -148,8 +185,7 @@ export function StreamContainer({
         </div>
       )}
 
-      {/* 配信終了 */}
-      {status === "ended" && (
+      {!isTestMode && status === "ended" && (
         <div className="flex h-full items-center justify-center">
           {schedule.ended_image_url && schedule.ended_image_url !== "/ended.jpg" ? (
             <Image src={schedule.ended_image_url} alt="配信終了" fill className="object-cover" priority />

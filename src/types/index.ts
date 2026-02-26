@@ -27,6 +27,7 @@ export interface Schedule {
   zoom_password: string | null;
   waiting_image_url: string;
   ended_image_url: string;
+  is_test_live: boolean;
   status: StreamStatus;
   created_at: string;
   updated_at: string;

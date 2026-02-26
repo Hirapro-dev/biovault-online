@@ -16,9 +16,10 @@ import {
 
 interface WatchPageProps {
   schedule: Schedule;
+  isTestMode?: boolean;
 }
 
-export function WatchPage({ schedule }: WatchPageProps) {
+export function WatchPage({ schedule, isTestMode = false }: WatchPageProps) {
   const router = useRouter();
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [customerName, setCustomerName] = useState<string>("匿名");
@@ -27,6 +28,14 @@ export function WatchPage({ schedule }: WatchPageProps) {
 
   // ログイン確認
   useEffect(() => {
+    // テストモードはログイン不要
+    if (isTestMode) {
+      setCustomerId("test-viewer");
+      setCustomerName("テスト視聴者");
+      setIsAuthed(true);
+      return;
+    }
+
     const cid = localStorage.getItem("customer_id");
     const cname = localStorage.getItem("customer_name");
     if (!cid) {
@@ -43,7 +52,7 @@ export function WatchPage({ schedule }: WatchPageProps) {
       schedule_id: schedule.id,
       customer_id: cid,
     });
-  }, [router, schedule.slug, schedule.id]);
+  }, [router, schedule.slug, schedule.id, isTestMode]);
 
   const handleLogout = () => {
     localStorage.removeItem("customer_id");
@@ -93,6 +102,13 @@ export function WatchPage({ schedule }: WatchPageProps) {
         </div>
       </header>
 
+      {/* テストモードバナー */}
+      {isTestMode && (
+        <div className="bg-amber-600 px-4 py-1.5 text-center text-sm font-medium text-white">
+          テスト配信モード — 本番環境には影響しません
+        </div>
+      )}
+
       {/* メインコンテンツ */}
       <main className="mx-auto max-w-[1800px] px-4 py-6 lg:flex lg:gap-6">
         {/* 左: 動画エリア + 情報 */}
@@ -111,6 +127,7 @@ export function WatchPage({ schedule }: WatchPageProps) {
               schedule={schedule}
               customerId={customerId}
               customerName={customerName}
+              isTestMode={isTestMode}
             />
           </div>
 

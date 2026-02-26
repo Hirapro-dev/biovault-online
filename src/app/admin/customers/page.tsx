@@ -115,12 +115,12 @@ export default function CustomersPage() {
   );
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 min-w-0 max-w-full">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-bold">顧客管理</h1>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={downloadCSV} className="gap-1"><Download className="h-4 w-4" />CSV</Button>
-          <Button onClick={() => { setShowForm(!showForm); setEditingId(null); setForm({ customer_id: generateId(), name: "", memo: "" }); }} className="gap-1">
+          <Button variant="outline" onClick={downloadCSV} className="gap-1" size="sm"><Download className="h-4 w-4" />CSV</Button>
+          <Button onClick={() => { setShowForm(!showForm); setEditingId(null); setForm({ customer_id: generateId(), name: "", memo: "" }); }} className="gap-1" size="sm">
             <Plus className="h-4 w-4" />新規顧客
           </Button>
         </div>
@@ -181,25 +181,25 @@ export default function CustomersPage() {
       </div>
 
       {/* 一覧 */}
-      <Card>
+      <Card className="overflow-hidden min-w-0">
         <CardHeader><CardTitle>顧客一覧（{filtered.length}名）</CardTitle></CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+        <CardContent className="px-0 sm:px-6 min-w-0">
+          <div className="overflow-x-auto px-4 sm:px-0 -mx-0">
+            <table className="w-full min-w-[600px] text-sm">
               <thead>
                 <tr className="border-b text-left">
-                  <th className="pb-3 pr-4 font-medium">顧客ID</th>
-                  <th className="pb-3 pr-4 font-medium">氏名</th>
-                  <th className="pb-3 pr-4 font-medium">メモ</th>
-                  <th className="pb-3 pr-4 font-medium">ステータス</th>
-                  <th className="pb-3 pr-4 font-medium">登録日</th>
-                  <th className="pb-3 font-medium">操作</th>
+                  <th className="whitespace-nowrap pb-3 pr-4 font-medium">顧客ID</th>
+                  <th className="whitespace-nowrap pb-3 pr-4 font-medium">氏名</th>
+                  <th className="whitespace-nowrap pb-3 pr-4 font-medium">メモ</th>
+                  <th className="whitespace-nowrap pb-3 pr-4 font-medium">ステータス</th>
+                  <th className="whitespace-nowrap pb-3 pr-4 font-medium">登録日</th>
+                  <th className="whitespace-nowrap pb-3 font-medium">操作</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map(c => (
                   <tr key={c.id} className="border-b last:border-0">
-                    <td className="py-3 pr-4">
+                    <td className="whitespace-nowrap py-3 pr-4">
                       <div className="flex items-center gap-1">
                         <span className="font-mono text-xs">{c.customer_id}</span>
                         <button onClick={() => copyId(c.customer_id)} className="text-muted-foreground hover:text-foreground">
@@ -207,17 +207,17 @@ export default function CustomersPage() {
                         </button>
                       </div>
                     </td>
-                    <td className="py-3 pr-4">{c.name}</td>
+                    <td className="whitespace-nowrap py-3 pr-4">{c.name}</td>
                     <td className="py-3 pr-4 text-muted-foreground text-xs">{c.memo || "-"}</td>
-                    <td className="py-3 pr-4">
+                    <td className="whitespace-nowrap py-3 pr-4">
                       <button onClick={() => handleToggleActive(c)}>
                         <Badge variant={c.is_active ? "default" : "outline"} className="cursor-pointer">
                           {c.is_active ? "有効" : "無効"}
                         </Badge>
                       </button>
                     </td>
-                    <td className="py-3 pr-4 text-xs text-muted-foreground">{new Date(c.created_at).toLocaleDateString("ja-JP")}</td>
-                    <td className="py-3">
+                    <td className="whitespace-nowrap py-3 pr-4 text-xs text-muted-foreground">{new Date(c.created_at).toLocaleDateString("ja-JP")}</td>
+                    <td className="whitespace-nowrap py-3">
                       <div className="flex gap-1">
                         <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => startEdit(c)}><Pencil className="h-3.5 w-3.5" /></Button>
                         <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => handleDelete(c.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
