@@ -146,11 +146,11 @@ export default function LoginPage() {
 
             {/* 機密保持契約 */}
             <div className="space-y-3">
-              <p className="text-xs font-medium uppercase tracking-widest text-white">
-                機密保持契約
+              <p className=" text-amber-300 text-xs font-medium uppercase tracking-wides font-semibold">
+                *機密保持契約
               </p>
+              <p className="text-xs mb-3 text-white">このLIVE配信には機密情報が含まれています。以下の機密保持契約内容をご確認ください。</p>
               <div className="h-40 overflow-y-auto rounded-lg border border-teal-500/15 bg-[#0d1520]/80 p-3 text-xs leading-relaxed text-slate-400 scrollbar-thin">
-                <p className="mb-3 font-semibold text-slate-300">機密保持契約書</p>
                 <p className="mb-2">株式会社SCPP（以下「甲」という。）とLIVE配信視聴者（以下「乙」という。）は，乙が甲から開示された情報（以下「機密情報」という。）の取扱いについて次のとおり契約（以下「本契約」という。）を締結する。</p>
                 <p className="mb-1 font-semibold text-slate-300">第１条（機密情報）</p>
                 <p className="mb-2">本契約において機密情報とは，甲が乙に対して，書面，口頭，電子メールその他方法を問わず開示した技術上または営業上の情報をいう。<br />ただし，次の各号の一に該当する情報については，機密情報に含まれない。<br />・甲から開示を受けた時点で既に公知であった情報<br />・乙が正当な権限を有する第三者から機密保持義務を負うことなく取得した情報<br />・甲から開示を受けた後，乙の責に帰すべき事由によらないで公知になった情報</p>
