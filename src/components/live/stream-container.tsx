@@ -262,17 +262,14 @@ export function StreamContainer({
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/video-bg.png" alt="" className="absolute inset-0 h-full w-full object-cover" />
           <div className="relative z-10 text-center text-white">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.png" alt="BioVault" className="mx-auto mb-6 h-8 w-auto object-contain drop-shadow-[0_0_15px_rgba(94,234,212,0.25)]" />
-            <p className="mb-6 text-base font-semibold text-slate-300">配信の準備ができました</p>
+            <p className="mb-3 text-lg md:text-xl font-semibold text-slate-300">配信開始しております</p>
             <button
               onClick={handleStartViewing}
-              className="group inline-flex items-center gap-3 rounded-full bg-teal-600 px-8 py-4 text-lg font-bold text-white shadow-lg shadow-teal-500/25 transition-all hover:bg-teal-500 hover:shadow-teal-500/40 hover:scale-105 active:scale-95"
+              className="group inline-flex items-center gap-3 rounded-full bg-teal-600 px-4 py-4 text-lg font-bold text-white shadow-lg shadow-teal-500/25 transition-all hover:bg-teal-500 hover:shadow-teal-500/40 hover:scale-105 active:scale-95"
             >
               <Play className="h-6 w-6 fill-current" />
-              タップして視聴を開始
             </button>
-            <p className="mt-4 text-xs text-slate-500">音声を再生するにはタップが必要です</p>
+            <p className="mt-4 text-xs text-slate-500">視聴する際は再生ボタンをクリックしてください</p>
           </div>
         </div>
       )}
