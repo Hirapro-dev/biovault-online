@@ -29,7 +29,8 @@ export default function SchedulesPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
 
-  // フィルター
+  // タブ & フィルター
+  const [activeTab, setActiveTab] = useState<"all" | "upcoming" | "live" | "ended">("upcoming");
   const [filterYear, setFilterYear] = useState<string>("all");
   const [filterMonth, setFilterMonth] = useState<string>("all");
   const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
@@ -42,24 +43,37 @@ export default function SchedulesPage() {
     if (data) setSchedules(data as Schedule[]);
   }
 
-  // 年・月の選択肢を算出
+  // ステータス別カウント
+  const statusCounts = useMemo(() => ({
+    upcoming: schedules.filter(s => s.status === "upcoming").length,
+    live: schedules.filter(s => s.status === "live").length,
+    ended: schedules.filter(s => s.status === "ended").length,
+  }), [schedules]);
+
+  // タブでフィルタされたスケジュール
+  const tabFiltered = useMemo(() => {
+    if (activeTab === "all") return schedules;
+    return schedules.filter(s => s.status === activeTab);
+  }, [schedules, activeTab]);
+
+  // 年・月の選択肢を算出（タブフィルタ後のデータから）
   const availableYears = useMemo(() => {
-    const years = new Set(schedules.map(s => new Date(s.scheduled_start).getFullYear()));
+    const years = new Set(tabFiltered.map(s => new Date(s.scheduled_start).getFullYear()));
     return Array.from(years).sort((a, b) => b - a);
-  }, [schedules]);
+  }, [tabFiltered]);
 
   const availableMonths = useMemo(() => {
-    let filtered = schedules;
+    let filtered = tabFiltered;
     if (filterYear !== "all") {
       filtered = filtered.filter(s => new Date(s.scheduled_start).getFullYear() === Number(filterYear));
     }
     const months = new Set(filtered.map(s => new Date(s.scheduled_start).getMonth() + 1));
     return Array.from(months).sort((a, b) => a - b);
-  }, [schedules, filterYear]);
+  }, [tabFiltered, filterYear]);
 
   // フィルタリング & ソート
   const filteredSchedules = useMemo(() => {
-    let result = [...schedules];
+    let result = [...tabFiltered];
     if (filterYear !== "all") {
       result = result.filter(s => new Date(s.scheduled_start).getFullYear() === Number(filterYear));
     }
@@ -71,7 +85,7 @@ export default function SchedulesPage() {
       return sortOrder === "asc" ? diff : -diff;
     });
     return result;
-  }, [schedules, filterYear, filterMonth, sortOrder]);
+  }, [tabFiltered, filterYear, filterMonth, sortOrder]);
 
   async function handleCreate() {
     if (!form.title || !form.scheduled_start) return;
@@ -179,6 +193,47 @@ export default function SchedulesPage() {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* ステータスタブ */}
+      {schedules.length > 0 && (
+        <div className="flex border-b border-border">
+          {([
+            { key: "all", label: "すべて", count: schedules.length },
+            { key: "upcoming", label: "予定", count: statusCounts.upcoming },
+            { key: "live", label: "配信中", count: statusCounts.live },
+            { key: "ended", label: "配信済", count: statusCounts.ended },
+          ] as const).map(tab => {
+            const isLiveHighlight = tab.key === "live" && statusCounts.live > 0;
+            return (
+              <button
+                key={tab.key}
+                onClick={() => { setActiveTab(tab.key); setFilterYear("all"); setFilterMonth("all"); }}
+                className={`relative px-4 py-2.5 text-sm font-medium transition-colors ${
+                  isLiveHighlight
+                    ? "font-bold text-red-600 dark:text-red-500"
+                    : activeTab === tab.key
+                      ? "text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {tab.label}
+                <span className={`ml-1.5 inline-flex items-center justify-center rounded-full px-1.5 py-0.5 text-xs ${
+                  isLiveHighlight
+                    ? "bg-red-600 text-white"
+                    : activeTab === tab.key
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground"
+                }`}>
+                  {tab.count}
+                </span>
+                {activeTab === tab.key && (
+                  <span className={`absolute bottom-0 left-0 right-0 h-0.5 ${isLiveHighlight ? "bg-red-600" : "bg-primary"}`} />
+                )}
+              </button>
+            );
+          })}
+        </div>
       )}
 
       {/* フィルター */}

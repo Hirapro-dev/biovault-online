@@ -180,7 +180,7 @@ export default function LoginPage() {
                   onCheckedChange={(v) => setAgreed(v === true)}
                   className="border-teal-500/40 data-[state=checked]:bg-teal-600 data-[state=checked]:border-teal-600"
                 />
-                <span className="text-sm text-slate-300 select-none">
+                <span className="text-xs text-slate-300 select-none">
                   機密保持契約に同意する
                 </span>
               </label>
