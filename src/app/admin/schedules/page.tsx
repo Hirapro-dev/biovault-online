@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Plus, ExternalLink, Copy, Check, Trash2, CalendarDays, ArrowUpDown, ChevronDown } from "lucide-react";
+import { Plus, ExternalLink, Copy, Check, Trash2, CalendarDays, ArrowUpDown, ChevronDown, Download } from "lucide-react";
 import type { Schedule } from "@/types";
 
 function slugify(): string {
@@ -114,6 +114,22 @@ export default function SchedulesPage() {
     setTimeout(() => setCopiedSlug(null), 1500);
   }
 
+  function downloadCSV() {
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const headers = ["日時", "タイトル", "URL"];
+    const rows = filteredSchedules.map(s => {
+      const d = new Date(s.scheduled_start);
+      const dateStr = `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+      return [dateStr, s.title, `${origin}/watch/${s.slug}`];
+    });
+    const csv = [headers, ...rows].map(r => r.map(cell => `"${cell}"`).join(",")).join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `schedules_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+  }
+
   const statusLabel = { upcoming: "配信前", live: "配信中", ended: "終了" } as const;
   const statusVariant = { upcoming: "secondary", live: "destructive", ended: "outline" } as const;
 
@@ -121,7 +137,10 @@ export default function SchedulesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">スケジュール管理</h1>
-        <Button onClick={() => setShowForm(!showForm)} className="gap-1"><Plus className="h-4 w-4" />新規スケジュール</Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={downloadCSV} className="gap-1" size="sm"><Download className="h-4 w-4" />CSV</Button>
+          <Button onClick={() => setShowForm(!showForm)} className="gap-1" size="sm"><Plus className="h-4 w-4" />新規スケジュール</Button>
+        </div>
       </div>
 
       {showForm && (
