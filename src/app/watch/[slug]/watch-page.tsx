@@ -193,12 +193,12 @@ export function WatchPage({ schedule, isTestMode = false }: WatchPageProps) {
           <div className="hidden lg:block">
             {/* 再読み込みセクション */}
             <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm text-slate-300">
+              <p className="text-xs text-slate-300">
                 ※配信中に画面・音声の不具合がありましたら、 こちらの再読み込みボタンをお試しください。
               </p>
               <Button
                 onClick={handleReload}
-                className="w-full rounded-full bg-gradient-to-r from-teal-500 to-cyan-500 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-teal-900/20 hover:from-teal-400 hover:to-cyan-400 sm:w-auto sm:py-2 sm:text-sm"
+                className="w-full rounded-full bg-gradient-to-r from-teal-500 to-cyan-500 px-6 py-3 text-xs font-bold text-white shadow-lg shadow-teal-900/20 hover:from-teal-400 hover:to-cyan-400 sm:w-auto sm:py-2 sm:text-sm"
               >
                 再読み込み
               </Button>
@@ -207,12 +207,12 @@ export function WatchPage({ schedule, isTestMode = false }: WatchPageProps) {
             {/* 確認事項アコーディオン */}
             <div className="mt-4 rounded-lg border border-teal-500/10 bg-[#0a1118]/60 backdrop-blur-sm">
               <div className="flex w-full flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-                <span className="text-sm font-medium text-teal-400">
+                <span className="text-xs font-medium text-teal-400">
                   視聴の際は必ずこちらをご確認ください
                 </span>
                 <button
                   onClick={() => setIsConfirmOpen(!isConfirmOpen)}
-                  className="flex w-full items-center justify-center gap-2 rounded-lg border border-teal-500/20 px-4 py-2 text-sm text-slate-300 transition-colors hover:bg-teal-500/5 sm:w-auto"
+                  className="flex w-full items-center justify-center gap-2 rounded-lg border border-teal-500/20 px-4 py-2 text-xs text-slate-300 transition-colors hover:bg-teal-500/5 sm:w-auto"
                 >
                   確認する
                   {isConfirmOpen ? (
@@ -224,7 +224,7 @@ export function WatchPage({ schedule, isTestMode = false }: WatchPageProps) {
               </div>
               {isConfirmOpen && (
                 <div className="border-t border-teal-500/10 px-4 pb-4 pt-3">
-                  <ul className="space-y-3 text-sm leading-relaxed text-slate-300">
+                  <ul className="space-y-3 text-xs leading-relaxed text-slate-300">
                     <li className="flex gap-2">
                       <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-teal-500/50" />
                       <span>
@@ -244,25 +244,16 @@ export function WatchPage({ schedule, isTestMode = false }: WatchPageProps) {
           </div>
         </div>
 
-        {/* 右: チャット */}
-        <div className="mt-6 h-[500px] w-full overflow-hidden rounded-xl border border-teal-500/15 bg-[#0a1118]/80 backdrop-blur-sm lg:mt-0 lg:h-[calc(100vh-72px)] lg:w-[400px] lg:sticky lg:top-[60px]">
-          <ChatRoom
-            scheduleId={schedule.id}
-            scheduleSlug={schedule.slug}
-            customerId={customerId}
-          />
-        </div>
-
-        {/* スマホ: 再読み込み・確認事項・説明欄をチャットの下に表示 */}
+        {/* スマホ: 再読み込み・確認事項をチャットの上に表示 */}
         <div className="lg:hidden">
           {/* 再読み込みセクション */}
           <div className="mt-5 flex flex-col gap-3">
-            <p className="text-sm text-slate-300">
+            <p className="text-xs text-slate-300">
               ※配信中に画面・音声の不具合がありましたら、 こちらの再読み込みボタンをお試しください。
             </p>
             <Button
               onClick={handleReload}
-              className="w-full rounded-full bg-gradient-to-r from-teal-500 to-cyan-500 px-6 py-3 text-base font-bold text-white shadow-lg shadow-teal-900/20 hover:from-teal-400 hover:to-cyan-400"
+              className="w-full rounded-lg bg-gradient-to-r from-teal-500 to-cyan-500 px-6 py-3 text-xs font-bold text-white shadow-lg shadow-teal-900/20 hover:from-teal-400 hover:to-cyan-400"
             >
               再読み込み
             </Button>
@@ -271,12 +262,12 @@ export function WatchPage({ schedule, isTestMode = false }: WatchPageProps) {
           {/* 確認事項アコーディオン */}
           <div className="mt-4 rounded-lg border border-teal-500/10 bg-[#0a1118]/60 backdrop-blur-sm">
             <div className="flex w-full flex-col gap-2 px-4 py-3">
-              <span className="text-sm font-medium text-teal-400">
+              <span className="text-xs font-medium text-teal-400">
                 視聴の際は必ずこちらをご確認ください
               </span>
               <button
                 onClick={() => setIsConfirmOpen(!isConfirmOpen)}
-                className="flex w-full items-center justify-center gap-2 rounded-lg border border-teal-500/20 px-4 py-2 text-sm text-slate-300 transition-colors hover:bg-teal-500/5"
+                className="flex w-full items-center justify-center gap-2 rounded-lg border border-teal-500/20 px-4 py-2 text-xs text-slate-300 transition-colors hover:bg-teal-500/5"
               >
                 確認する
                 {isConfirmOpen ? (
@@ -288,7 +279,7 @@ export function WatchPage({ schedule, isTestMode = false }: WatchPageProps) {
             </div>
             {isConfirmOpen && (
               <div className="border-t border-teal-500/10 px-4 pb-4 pt-3">
-                <ul className="space-y-3 text-sm leading-relaxed text-slate-300">
+                <ul className="space-y-3 text-xs leading-relaxed text-slate-300">
                   <li className="flex gap-2">
                     <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-teal-500/50" />
                     <span>
@@ -305,6 +296,15 @@ export function WatchPage({ schedule, isTestMode = false }: WatchPageProps) {
               </div>
             )}
           </div>
+        </div>
+
+        {/* 右: チャット */}
+        <div className="mt-6 h-[500px] w-full overflow-hidden rounded-xl border border-teal-500/15 bg-[#0a1118]/80 backdrop-blur-sm lg:mt-0 lg:h-[calc(100vh-72px)] lg:w-[400px] lg:sticky lg:top-[60px]">
+          <ChatRoom
+            scheduleId={schedule.id}
+            scheduleSlug={schedule.slug}
+            customerId={customerId}
+          />
         </div>
       </main>
 
