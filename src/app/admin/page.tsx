@@ -5,13 +5,12 @@ import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users, Radio, MessageSquare, CalendarDays } from "lucide-react";
+import { Users, Radio, CalendarDays, CalendarClock } from "lucide-react";
 import type { Schedule } from "@/types";
 
 export default function AdminDashboard() {
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [totalCustomers, setTotalCustomers] = useState(0);
-  const [pendingMessages, setPendingMessages] = useState(0);
 
   useEffect(() => {
     const supabase = createClient();
@@ -21,9 +20,6 @@ export default function AdminDashboard() {
 
       const { count } = await supabase.from("customers").select("*", { count: "exact", head: true });
       setTotalCustomers(count || 0);
-
-      const { count: mc } = await supabase.from("chat_messages").select("*", { count: "exact", head: true }).eq("status", "pending");
-      setPendingMessages(mc || 0);
     }
     load();
   }, []);
@@ -38,10 +34,17 @@ export default function AdminDashboard() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">スケジュール数</CardTitle>
-            <CalendarDays className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">配信予定</CardTitle>
+            <CalendarClock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent><div className="text-2xl font-bold">{schedules.length}</div></CardContent>
+          <CardContent><div className="text-2xl font-bold">{schedules.filter(s => s.status === "upcoming").length}</div></CardContent>
+        </Card>
+        <Card className={schedules.filter(s => s.status === "live").length > 0 ? "border-red-500/50 bg-red-50 dark:bg-red-950/20" : ""}>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className={`text-sm font-medium ${schedules.filter(s => s.status === "live").length > 0 ? "text-red-600 dark:text-red-500 font-bold" : ""}`}>配信中</CardTitle>
+            <Radio className={`h-4 w-4 ${schedules.filter(s => s.status === "live").length > 0 ? "text-red-600 dark:text-red-500 animate-pulse" : "text-muted-foreground"}`} />
+          </CardHeader>
+          <CardContent><div className={`text-2xl font-bold ${schedules.filter(s => s.status === "live").length > 0 ? "text-red-600 dark:text-red-500" : ""}`}>{schedules.filter(s => s.status === "live").length}</div></CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -52,17 +55,10 @@ export default function AdminDashboard() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">配信中</CardTitle>
-            <Radio className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">総スケジュール数</CardTitle>
+            <CalendarDays className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent><div className="text-2xl font-bold">{schedules.filter(s => s.status === "live").length}</div></CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">未承認チャット</CardTitle>
-            <MessageSquare className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent><div className="text-2xl font-bold">{pendingMessages}</div></CardContent>
+          <CardContent><div className="text-2xl font-bold">{schedules.length}</div></CardContent>
         </Card>
       </div>
 
