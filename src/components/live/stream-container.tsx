@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import type { Schedule, StreamStatus } from "@/types";
-import { Radio, Maximize, Minimize, Play } from "lucide-react";
+import { Radio, Maximize, Minimize, VolumeX } from "lucide-react";
 
 interface StreamContainerProps {
   schedule: Schedule;
@@ -24,22 +24,39 @@ export function StreamContainer({
   const [actualStart, setActualStart] = useState<string | null>(schedule.actual_start);
   const videoAreaRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  // 視聴開始ボタン: ユーザー操作を起点にして音声自動再生ポリシーをクリアする
-  const [viewStarted, setViewStarted] = useState(false);
 
-  const handleStartViewing = useCallback(() => {
-    // ユーザー操作（タップ/クリック）コンテキストで AudioContext を resume
-    try {
-      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      if (AudioCtx) {
-        const ctx = new AudioCtx();
-        ctx.resume().then(() => ctx.close());
-      }
-    } catch {
-      // AudioContext が使えなくても続行
+  // 音声ガイドオーバーレイ: 配信開始時に表示し、タップまたは5秒で非表示
+  const [showAudioGuide, setShowAudioGuide] = useState(false);
+  const audioGuideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const dismissAudioGuide = useCallback(() => {
+    setShowAudioGuide(false);
+    if (audioGuideTimerRef.current) {
+      clearTimeout(audioGuideTimerRef.current);
+      audioGuideTimerRef.current = null;
     }
-    setViewStarted(true);
   }, []);
+
+  // 配信がライブになったら音声ガイドを表示
+  const prevStatusRef = useRef<string>("");
+  useEffect(() => {
+    const isNowLive = isTestMode ? isTestLive : status === "live";
+    const wasLive = prevStatusRef.current === "live";
+    prevStatusRef.current = isNowLive ? "live" : "not_live";
+
+    if (isNowLive && !wasLive && schedule.zoom_meeting_number) {
+      setShowAudioGuide(true);
+      audioGuideTimerRef.current = setTimeout(() => {
+        setShowAudioGuide(false);
+      }, 5000);
+    }
+    if (!isNowLive) {
+      setShowAudioGuide(false);
+    }
+    return () => {
+      if (audioGuideTimerRef.current) clearTimeout(audioGuideTimerRef.current);
+    };
+  }, [status, isTestLive, isTestMode, schedule.zoom_meeting_number]);
 
   // フルスクリーン切り替え
   // iOS Safari は div/iframe に対して requestFullscreen() をサポートしないため、
@@ -185,23 +202,7 @@ export function StreamContainer({
       style={isFullscreen ? { height: "100dvh" } : undefined}
     >
       {/* テストモード: is_test_live で表示制御 */}
-      {isTestMode && isTestLive && schedule.zoom_meeting_number && !viewStarted && (
-        <div className="flex h-full items-center justify-center">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/video-bg.png" alt="" className="absolute inset-0 h-full w-full object-cover" />
-          <div className="relative z-10 text-center text-white">
-            <p className="mb-3 text-lg md:text-xl font-semibold text-slate-300">配信開始しております</p>
-            <button
-              onClick={handleStartViewing}
-              className="group inline-flex items-center gap-3 rounded-full bg-teal-600 px-4 py-4 text-lg font-bold text-white shadow-lg shadow-teal-500/25 transition-all hover:bg-teal-500 hover:shadow-teal-500/40 hover:scale-105 active:scale-95"
-            >
-              <Play className="h-6 w-6 fill-current" />
-            </button>
-            <p className="mt-4 text-xs text-slate-500">視聴する際は再生ボタンをクリックしてください</p>
-          </div>
-        </div>
-      )}
-      {isTestMode && isTestLive && schedule.zoom_meeting_number && viewStarted && (
+      {isTestMode && isTestLive && schedule.zoom_meeting_number && (
         <iframe
           src={`/zoom-meeting?meetingNumber=${encodeURIComponent(schedule.zoom_meeting_number)}&password=${encodeURIComponent(schedule.zoom_password || "")}&userName=${encodeURIComponent(customerName)}`}
           allow="camera; microphone; display-capture; autoplay; fullscreen"
@@ -250,30 +251,14 @@ export function StreamContainer({
                 <p className="mt-2 text-sm text-slate-400">
                   開始時刻: {new Date(schedule.scheduled_start).toLocaleString("ja-JP")}
                 </p>
-                <p className="mt-1 text-xs text-slate-500">配信開始されましたら再生ボタンが表示されます</p>
+                <p className="mt-1 text-xs text-slate-500">開始時に自動で切り替わります</p>
               </div>
             </>
           )}
         </div>
       )}
 
-      {!isTestMode && status === "live" && schedule.zoom_meeting_number && !viewStarted && (
-        <div className="flex h-full items-center justify-center">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/video-bg.png" alt="" className="absolute inset-0 h-full w-full object-cover" />
-          <div className="relative z-10 text-center text-white">
-            <p className="mb-3 text-lg md:text-xl font-semibold text-slate-300">配信開始しております</p>
-            <button
-              onClick={handleStartViewing}
-              className="group inline-flex items-center gap-3 rounded-full bg-teal-600 px-4 py-4 text-lg font-bold text-white shadow-lg shadow-teal-500/25 transition-all hover:bg-teal-500 hover:shadow-teal-500/40 hover:scale-105 active:scale-95"
-            >
-              <Play className="h-6 w-6 fill-current" />
-            </button>
-            <p className="mt-4 text-xs text-slate-500">視聴する際は再生ボタンをクリックしてください</p>
-          </div>
-        </div>
-      )}
-      {!isTestMode && status === "live" && schedule.zoom_meeting_number && viewStarted && (
+      {!isTestMode && status === "live" && schedule.zoom_meeting_number && (
         <iframe
           src={`/zoom-meeting?meetingNumber=${encodeURIComponent(schedule.zoom_meeting_number)}&password=${encodeURIComponent(schedule.zoom_password || "")}&userName=${encodeURIComponent(customerName)}`}
           allow="camera; microphone; display-capture; autoplay; fullscreen"
@@ -309,6 +294,24 @@ export function StreamContainer({
               </div>
             </>
           )}
+        </div>
+      )}
+
+      {/* 音声ガイドオーバーレイ: 配信開始時にミュートアイコンを表示 */}
+      {showAudioGuide && (
+        <div
+          className="absolute inset-0 z-[9998] flex items-center justify-center cursor-pointer"
+          onClick={dismissAudioGuide}
+          onTouchEnd={(e) => { e.preventDefault(); dismissAudioGuide(); }}
+        >
+          <div className="flex flex-col items-center gap-3 animate-fade-in">
+            <div className="rounded-full bg-black/60 p-4">
+              <VolumeX className="h-10 w-10 text-white" />
+            </div>
+            <p className="rounded-lg bg-black/60 px-4 py-2 text-sm font-medium text-white">
+              音声が出ない場合は画面をタップしてください
+            </p>
+          </div>
         </div>
       )}
 
