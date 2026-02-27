@@ -15,9 +15,14 @@ import {
 } from "@/components/ui/card";
 import { Loader2, Shield } from "lucide-react";
 
+// 管理者IDからメールアドレスへのマッピング
+const ADMIN_ID_MAP: Record<string, string> = {
+  admin: "info@hirapro.jp",
+};
+
 export default function AdminLoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -30,6 +35,10 @@ export default function AdminLoginPage() {
     try {
       const supabase = createClient();
 
+      // 入力がメールアドレス形式でなければIDマッピングを参照
+      const input = loginId.trim().toLowerCase();
+      const email = input.includes("@") ? input : (ADMIN_ID_MAP[input] || input);
+
       const { data, error: authError } = await supabase.auth.signInWithPassword(
         {
           email,
@@ -38,7 +47,7 @@ export default function AdminLoginPage() {
       );
 
       if (authError) {
-        throw new Error("メールアドレスまたはパスワードが正しくありません");
+        throw new Error("IDまたはパスワードが正しくありません");
       }
 
       // 管理者権限チェック
@@ -75,13 +84,14 @@ export default function AdminLoginPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">メールアドレス</Label>
+              <Label htmlFor="loginId">ID または メールアドレス</Label>
               <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@example.com"
+                id="loginId"
+                type="text"
+                value={loginId}
+                onChange={(e) => setLoginId(e.target.value)}
+                placeholder="admin"
+                autoComplete="username"
                 required
               />
             </div>

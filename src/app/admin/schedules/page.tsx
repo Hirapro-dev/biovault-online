@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Plus, ExternalLink, Copy, Check, Trash2 } from "lucide-react";
+import { Plus, ExternalLink, Copy, Check, Trash2, CalendarDays, ArrowUpDown, ChevronDown } from "lucide-react";
 import type { Schedule } from "@/types";
 
 function slugify(): string {
@@ -29,6 +29,11 @@ export default function SchedulesPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
 
+  // フィルター
+  const [filterYear, setFilterYear] = useState<string>("all");
+  const [filterMonth, setFilterMonth] = useState<string>("all");
+  const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
+
   useEffect(() => { load(); }, []);
 
   async function load() {
@@ -36,6 +41,37 @@ export default function SchedulesPage() {
     const { data } = await supabase.from("schedules").select("*").order("scheduled_start", { ascending: false });
     if (data) setSchedules(data as Schedule[]);
   }
+
+  // 年・月の選択肢を算出
+  const availableYears = useMemo(() => {
+    const years = new Set(schedules.map(s => new Date(s.scheduled_start).getFullYear()));
+    return Array.from(years).sort((a, b) => b - a);
+  }, [schedules]);
+
+  const availableMonths = useMemo(() => {
+    let filtered = schedules;
+    if (filterYear !== "all") {
+      filtered = filtered.filter(s => new Date(s.scheduled_start).getFullYear() === Number(filterYear));
+    }
+    const months = new Set(filtered.map(s => new Date(s.scheduled_start).getMonth() + 1));
+    return Array.from(months).sort((a, b) => a - b);
+  }, [schedules, filterYear]);
+
+  // フィルタリング & ソート
+  const filteredSchedules = useMemo(() => {
+    let result = [...schedules];
+    if (filterYear !== "all") {
+      result = result.filter(s => new Date(s.scheduled_start).getFullYear() === Number(filterYear));
+    }
+    if (filterMonth !== "all") {
+      result = result.filter(s => new Date(s.scheduled_start).getMonth() + 1 === Number(filterMonth));
+    }
+    result.sort((a, b) => {
+      const diff = new Date(a.scheduled_start).getTime() - new Date(b.scheduled_start).getTime();
+      return sortOrder === "asc" ? diff : -diff;
+    });
+    return result;
+  }, [schedules, filterYear, filterMonth, sortOrder]);
 
   async function handleCreate() {
     if (!form.title || !form.scheduled_start) return;
@@ -126,43 +162,123 @@ export default function SchedulesPage() {
         </Card>
       )}
 
+      {/* フィルター */}
+      {schedules.length > 0 && (
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+            <CalendarDays className="h-4 w-4" />
+            <span>絞り込み:</span>
+          </div>
+          {/* 年 */}
+          <div className="relative">
+            <select
+              value={filterYear}
+              onChange={e => { setFilterYear(e.target.value); setFilterMonth("all"); }}
+              className="appearance-none rounded-md border border-border bg-background px-3 py-1.5 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              <option value="all">すべての年</option>
+              {availableYears.map(y => (
+                <option key={y} value={y}>{y}年</option>
+              ))}
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+          </div>
+          {/* 月 */}
+          <div className="relative">
+            <select
+              value={filterMonth}
+              onChange={e => setFilterMonth(e.target.value)}
+              className="appearance-none rounded-md border border-border bg-background px-3 py-1.5 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              <option value="all">すべての月</option>
+              {availableMonths.map(m => (
+                <option key={m} value={m}>{m}月</option>
+              ))}
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+          </div>
+          {/* 昇降順 */}
+          <button
+            onClick={() => setSortOrder(prev => prev === "desc" ? "asc" : "desc")}
+            className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm transition-colors hover:bg-muted"
+          >
+            <ArrowUpDown className="h-3.5 w-3.5" />
+            {sortOrder === "desc" ? "新しい順" : "古い順"}
+          </button>
+          {/* フィルターリセット */}
+          {(filterYear !== "all" || filterMonth !== "all") && (
+            <button
+              onClick={() => { setFilterYear("all"); setFilterMonth("all"); }}
+              className="text-xs text-muted-foreground underline hover:text-foreground"
+            >
+              リセット
+            </button>
+          )}
+          <span className="ml-auto text-xs text-muted-foreground">
+            {filteredSchedules.length}件
+          </span>
+        </div>
+      )}
+
       {/* 一覧 */}
       <div className="space-y-3">
         {schedules.length === 0 ? (
           <Card><CardContent className="py-8 text-center text-sm text-muted-foreground">スケジュールがありません</CardContent></Card>
-        ) : schedules.map(s => (
-          <Card key={s.id} className="cursor-pointer transition-colors hover:bg-muted/30" onClick={() => router.push(`/admin/schedules/${s.id}`)}>
-            <CardContent className="flex items-center justify-between p-4">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <h3 className="font-medium">{s.title}</h3>
-                  <Badge variant={statusVariant[s.status]}>{statusLabel[s.status]}</Badge>
+        ) : filteredSchedules.length === 0 ? (
+          <Card><CardContent className="py-8 text-center text-sm text-muted-foreground">該当するスケジュールがありません</CardContent></Card>
+        ) : filteredSchedules.map(s => {
+          const d = new Date(s.scheduled_start);
+          const dateStr = `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}`;
+          const timeStr = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+          const watchUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/watch/${s.slug}`;
+
+          return (
+            <Card key={s.id} className="cursor-pointer transition-colors hover:bg-muted/30" onClick={() => router.push(`/admin/schedules/${s.id}`)}>
+              <CardContent className="p-4 sm:p-5">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1 space-y-2">
+                    {/* 日時 — 一番大きいフォント */}
+                    <div className="flex items-baseline gap-2 flex-wrap">
+                      <span className="text-lg sm:text-xl font-bold tabular-nums">{dateStr}</span>
+                      <span className="text-lg sm:text-xl font-bold tabular-nums">{timeStr}</span>
+                      <Badge variant={statusVariant[s.status]} className="ml-1">{statusLabel[s.status]}</Badge>
+                    </div>
+                    {/* セミナー名 — 日時の0.8倍 */}
+                    <h3 className="text-base sm:text-lg leading-tight">{s.title}</h3>
+                    {/* URL — コピーしやすく */}
+                    <div
+                      className="flex items-center gap-2"
+                      onClick={e => e.stopPropagation()}
+                    >
+                      <span className="min-w-0 truncate rounded bg-muted px-2 py-1 font-mono text-xs sm:text-sm text-muted-foreground select-all">
+                        {watchUrl}
+                      </span>
+                      <button
+                        onClick={() => copyUrl(s.slug)}
+                        className="shrink-0 rounded-md border border-border p-1.5 transition-colors hover:bg-muted"
+                        title="URLをコピー"
+                      >
+                        {copiedSlug === s.slug ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4 text-muted-foreground" />}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-1">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8 text-destructive hover:text-destructive"
+                      onClick={e => { e.stopPropagation(); handleDelete(s.id, s.title); }}
+                      title="削除"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                    <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                  </div>
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  {new Date(s.scheduled_start).toLocaleString("ja-JP")}
-                </p>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <span className="font-mono">/watch/{s.slug}</span>
-                  <button onClick={e => { e.stopPropagation(); copyUrl(s.slug); }} className="hover:text-foreground">
-                    {copiedSlug === s.slug ? <Check className="h-3 w-3 text-green-600" /> : <Copy className="h-3 w-3" />}
-                  </button>
-                </div>
-              </div>
-              <div className="flex items-center gap-1">
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="h-8 w-8 text-destructive hover:text-destructive"
-                  onClick={e => { e.stopPropagation(); handleDelete(s.id, s.title); }}
-                  title="削除"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-                <ExternalLink className="h-4 w-4 text-muted-foreground" />
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
     </div>
   );
