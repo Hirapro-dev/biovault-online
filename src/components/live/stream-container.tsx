@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import type { Schedule, StreamStatus } from "@/types";
-import { Radio, Maximize, Minimize } from "lucide-react";
+import { Radio, Maximize, Minimize, Play } from "lucide-react";
 
 interface StreamContainerProps {
   schedule: Schedule;
@@ -24,6 +24,22 @@ export function StreamContainer({
   const [actualStart, setActualStart] = useState<string | null>(schedule.actual_start);
   const videoAreaRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  // 視聴開始ボタン: ユーザー操作を起点にして音声自動再生ポリシーをクリアする
+  const [viewStarted, setViewStarted] = useState(false);
+
+  const handleStartViewing = useCallback(() => {
+    // ユーザー操作（タップ/クリック）コンテキストで AudioContext を resume
+    try {
+      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (AudioCtx) {
+        const ctx = new AudioCtx();
+        ctx.resume().then(() => ctx.close());
+      }
+    } catch {
+      // AudioContext が使えなくても続行
+    }
+    setViewStarted(true);
+  }, []);
 
   // フルスクリーン切り替え
   // iOS Safari は div/iframe に対して requestFullscreen() をサポートしないため、
@@ -169,7 +185,26 @@ export function StreamContainer({
       style={isFullscreen ? { height: "100dvh" } : undefined}
     >
       {/* テストモード: is_test_live で表示制御 */}
-      {isTestMode && isTestLive && schedule.zoom_meeting_number && (
+      {isTestMode && isTestLive && schedule.zoom_meeting_number && !viewStarted && (
+        <div className="flex h-full items-center justify-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/video-bg.png" alt="" className="absolute inset-0 h-full w-full object-cover" />
+          <div className="relative z-10 text-center text-white">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.png" alt="BioVault" className="mx-auto mb-6 h-8 w-auto object-contain drop-shadow-[0_0_15px_rgba(94,234,212,0.25)]" />
+            <p className="mb-6 text-base font-semibold text-slate-300">テスト配信の準備ができました</p>
+            <button
+              onClick={handleStartViewing}
+              className="group inline-flex items-center gap-3 rounded-full bg-teal-600 px-8 py-4 text-lg font-bold text-white shadow-lg shadow-teal-500/25 transition-all hover:bg-teal-500 hover:shadow-teal-500/40 hover:scale-105 active:scale-95"
+            >
+              <Play className="h-6 w-6 fill-current" />
+              タップして視聴を開始
+            </button>
+            <p className="mt-4 text-xs text-slate-500">音声を再生するにはタップが必要です</p>
+          </div>
+        </div>
+      )}
+      {isTestMode && isTestLive && schedule.zoom_meeting_number && viewStarted && (
         <iframe
           src={`/zoom-meeting?meetingNumber=${encodeURIComponent(schedule.zoom_meeting_number)}&password=${encodeURIComponent(schedule.zoom_password || "")}&userName=${encodeURIComponent(customerName)}`}
           allow="camera; microphone; display-capture; autoplay; fullscreen"
@@ -225,7 +260,26 @@ export function StreamContainer({
         </div>
       )}
 
-      {!isTestMode && status === "live" && schedule.zoom_meeting_number && (
+      {!isTestMode && status === "live" && schedule.zoom_meeting_number && !viewStarted && (
+        <div className="flex h-full items-center justify-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/video-bg.png" alt="" className="absolute inset-0 h-full w-full object-cover" />
+          <div className="relative z-10 text-center text-white">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.png" alt="BioVault" className="mx-auto mb-6 h-8 w-auto object-contain drop-shadow-[0_0_15px_rgba(94,234,212,0.25)]" />
+            <p className="mb-6 text-base font-semibold text-slate-300">配信の準備ができました</p>
+            <button
+              onClick={handleStartViewing}
+              className="group inline-flex items-center gap-3 rounded-full bg-teal-600 px-8 py-4 text-lg font-bold text-white shadow-lg shadow-teal-500/25 transition-all hover:bg-teal-500 hover:shadow-teal-500/40 hover:scale-105 active:scale-95"
+            >
+              <Play className="h-6 w-6 fill-current" />
+              タップして視聴を開始
+            </button>
+            <p className="mt-4 text-xs text-slate-500">音声を再生するにはタップが必要です</p>
+          </div>
+        </div>
+      )}
+      {!isTestMode && status === "live" && schedule.zoom_meeting_number && viewStarted && (
         <iframe
           src={`/zoom-meeting?meetingNumber=${encodeURIComponent(schedule.zoom_meeting_number)}&password=${encodeURIComponent(schedule.zoom_password || "")}&userName=${encodeURIComponent(customerName)}`}
           allow="camera; microphone; display-capture; autoplay; fullscreen"
