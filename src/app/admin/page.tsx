@@ -67,23 +67,29 @@ export default function AdminDashboard() {
       </div>
 
       <Card>
-        <CardHeader><CardTitle>スケジュール一覧</CardTitle></CardHeader>
+        <CardHeader><CardTitle>今後のスケジュール</CardTitle></CardHeader>
         <CardContent>
-          {schedules.length === 0 ? (
-            <p className="text-sm text-muted-foreground">スケジュールがありません</p>
+          {schedules.filter(s => s.status === "upcoming").length === 0 ? (
+            <p className="text-sm text-muted-foreground">予定されているスケジュールはありません</p>
           ) : (
             <div className="space-y-3">
-              {schedules.map((s) => (
-                <Link key={s.id} href={`/admin/schedules/${s.id}`}
-                  className="flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-muted/50">
-                  <div>
-                    <h3 className="font-medium">{s.title}</h3>
-                    <p className="text-sm text-muted-foreground">{new Date(s.scheduled_start).toLocaleString("ja-JP")}</p>
-                    <p className="mt-1 font-mono text-xs text-muted-foreground">/watch/{s.slug}</p>
-                  </div>
-                  <Badge variant={statusVariant[s.status]}>{statusLabel[s.status]}</Badge>
-                </Link>
-              ))}
+              {schedules
+                .filter(s => s.status === "upcoming")
+                .sort((a, b) => new Date(a.scheduled_start).getTime() - new Date(b.scheduled_start).getTime())
+                .map((s) => {
+                  const d = new Date(s.scheduled_start);
+                  const dateStr = `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+                  return (
+                    <Link key={s.id} href={`/admin/schedules/${s.id}`}
+                      className="flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-muted/50">
+                      <div>
+                        <p className="text-lg font-bold tabular-nums">{dateStr}</p>
+                        <h3 className="mt-1 font-medium">{s.title}</h3>
+                      </div>
+                      <Badge variant={statusVariant[s.status]}>{statusLabel[s.status]}</Badge>
+                    </Link>
+                  );
+                })}
             </div>
           )}
         </CardContent>
