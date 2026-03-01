@@ -29,11 +29,11 @@ import {
   Save,
   X as XIcon,
   FlaskConical,
+  Download,
 } from "lucide-react";
 import type {
   Schedule,
   ChatMessage,
-  ViewerAccessLog,
   ViewerSession,
   Customer,
   StreamStatus,
@@ -92,7 +92,6 @@ export default function ScheduleDetailPage() {
 
   // データ
   const [schedule, setSchedule] = useState<Schedule | null>(null);
-  const [accessLogs, setAccessLogs] = useState<(ViewerAccessLog & { customer?: Customer })[]>([]);
   const [sessions, setSessions] = useState<(ViewerSession & { customer?: Customer })[]>([]);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [realtimeViewers, setRealtimeViewers] = useState<string[]>([]);
@@ -103,7 +102,7 @@ export default function ScheduleDetailPage() {
   const [copiedTest, setCopiedTest] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [editZoom, setEditZoom] = useState({ meeting_number: "", password: "" });
-  const [activeTab, setActiveTab] = useState<"overview" | "access" | "sessions" | "chat">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "active" | "sessions" | "chat">("overview");
   const [chatFilter, setChatFilter] = useState<"all" | "pending" | "approved">("all");
   const [testPageOpened, setTestPageOpened] = useState(false);
 
@@ -144,36 +143,6 @@ export default function ScheduleDetailPage() {
         scheduled_start: startLocal,
         auto_end_hours: s.auto_end_hours || 3,
       });
-    }
-  }, [scheduleId]);
-
-  const loadAccessLogs = useCallback(async () => {
-    const supabase = createClient();
-    const { data: logs } = await supabase
-      .from("viewer_access_logs")
-      .select("*")
-      .eq("schedule_id", scheduleId)
-      .order("accessed_at", { ascending: false });
-
-    if (logs && logs.length > 0) {
-      const customerIds = Array.from(new Set(logs.map((l: ViewerAccessLog) => l.customer_id)));
-      const { data: customers } = await supabase
-        .from("customers")
-        .select("*")
-        .in("customer_id", customerIds);
-
-      const customerMap = new Map(
-        (customers || []).map((c: Customer) => [c.customer_id, c])
-      );
-
-      setAccessLogs(
-        logs.map((l: ViewerAccessLog) => ({
-          ...l,
-          customer: customerMap.get(l.customer_id),
-        }))
-      );
-    } else {
-      setAccessLogs([]);
     }
   }, [scheduleId]);
 
@@ -222,11 +191,11 @@ export default function ScheduleDetailPage() {
   useEffect(() => {
     async function init() {
       setIsLoading(true);
-      await Promise.all([loadSchedule(), loadAccessLogs(), loadSessions(), loadChat()]);
+      await Promise.all([loadSchedule(), loadSessions(), loadChat()]);
       setIsLoading(false);
     }
     init();
-  }, [loadSchedule, loadAccessLogs, loadSessions, loadChat]);
+  }, [loadSchedule, loadSessions, loadChat]);
 
   // --- Presenceでリアルタイム視聴者追跡 ---
   useEffect(() => {
@@ -448,9 +417,45 @@ export default function ScheduleDetailPage() {
       ? chatMessages
       : chatMessages.filter((m) => m.status === chatFilter);
 
-  const uniqueAccessCustomers = new Set(accessLogs.map((l) => l.customer_id));
   const activeSessions = sessions.filter((s) => s.is_active);
   const totalViewTime = sessions.reduce((acc, s) => acc + (s.duration_seconds || 0), 0);
+
+  // アクティブログ: 顧客別に視聴時間・コメント数を集計
+  const activeLogData = (() => {
+    const map = new Map<string, { customer_id: string; name: string; totalSeconds: number; commentCount: number }>();
+
+    // セッションから視聴時間を集計
+    for (const s of sessions) {
+      const cid = s.customer_id;
+      if (!map.has(cid)) {
+        map.set(cid, {
+          customer_id: cid,
+          name: s.customer?.name || "-",
+          totalSeconds: 0,
+          commentCount: 0,
+        });
+      }
+      map.get(cid)!.totalSeconds += s.duration_seconds || 0;
+    }
+
+    // チャットからコメント数を集計
+    for (const m of chatMessages) {
+      const cid = m.customer_id;
+      if (!map.has(cid)) {
+        map.set(cid, {
+          customer_id: cid,
+          name: m.display_name || "-",
+          totalSeconds: 0,
+          commentCount: 0,
+        });
+      }
+      map.get(cid)!.commentCount += 1;
+    }
+
+    // 合計視聴時間の降順でソート
+    return Array.from(map.values()).sort((a, b) => b.totalSeconds - a.totalSeconds);
+  })();
+  const uniqueViewerCount = new Set(sessions.map((s) => s.customer_id)).size;
 
   return (
     <div className="space-y-6">
@@ -635,13 +640,13 @@ export default function ScheduleDetailPage() {
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">アクセス数</CardTitle>
+            <CardTitle className="text-sm font-medium">視聴者数</CardTitle>
             <Eye className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{accessLogs.length}</div>
+            <div className="text-2xl font-bold">{uniqueViewerCount}人</div>
             <p className="text-xs text-muted-foreground">
-              ユニーク: {uniqueAccessCustomers.size}人
+              セッション数: {sessions.length}
             </p>
           </CardContent>
         </Card>
@@ -688,9 +693,9 @@ export default function ScheduleDetailPage() {
         <div className="flex gap-1 rounded-lg border bg-muted/30 p-1 min-w-max sm:min-w-0">
           {[
             { key: "overview" as const, label: "基本情報" },
-            { key: "access" as const, label: `アクセスログ (${accessLogs.length})` },
+            { key: "active" as const, label: `アクティブログ (${activeLogData.length})` },
             { key: "sessions" as const, label: `視聴セッション (${sessions.length})` },
-            { key: "chat" as const, label: `チャット (${chatMessages.filter((m) => m.status === "pending").length})` },
+            { key: "chat" as const, label: `チャット (${chatMessages.length})` },
           ].map((tab) => (
             <button
               key={tab.key}
@@ -920,39 +925,68 @@ export default function ScheduleDetailPage() {
         </div>
       )}
 
-      {/* === アクセスログタブ === */}
-      {activeTab === "access" && (
+      {/* === アクティブログタブ === */}
+      {activeTab === "active" && (
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">アクセスログ</CardTitle>
-              <Button variant="outline" size="sm" onClick={loadAccessLogs} className="gap-1">
-                <RefreshCw className="h-3 w-3" />
-                更新
-              </Button>
+              <CardTitle className="text-lg">アクティブログ</CardTitle>
+              <div className="flex gap-2">
+                {activeLogData.length > 0 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1"
+                    onClick={() => {
+                      const headers = ["顧客ID", "氏名", "合計視聴時間", "合計コメント数"];
+                      const rows = activeLogData.map((r) => [
+                        r.customer_id,
+                        r.name,
+                        fmtDuration(r.totalSeconds),
+                        String(r.commentCount),
+                      ]);
+                      const csv = [headers, ...rows].map((r) => r.map((c) => `"${c}"`).join(",")).join("\n");
+                      const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+                      const a = document.createElement("a");
+                      a.href = URL.createObjectURL(blob);
+                      a.download = `active_log_${new Date().toISOString().slice(0, 10)}.csv`;
+                      a.click();
+                    }}
+                  >
+                    <Download className="h-3 w-3" />
+                    CSV
+                  </Button>
+                )}
+                <Button size="sm" onClick={() => { loadSessions(); loadChat(); }} className="gap-1 bg-blue-600 hover:bg-blue-700 text-white">
+                  <RefreshCw className="h-3 w-3" />
+                  更新
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent>
-            {accessLogs.length === 0 ? (
+            {activeLogData.length === 0 ? (
               <p className="py-8 text-center text-sm text-muted-foreground">
-                アクセスログはまだありません
+                まだデータがありません
               </p>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[480px] text-sm">
+                <table className="w-full min-w-[500px] text-sm">
                   <thead>
                     <tr className="border-b text-left">
                       <th className="whitespace-nowrap pb-2 pr-4 font-medium text-muted-foreground">顧客ID</th>
-                      <th className="whitespace-nowrap pb-2 pr-4 font-medium text-muted-foreground">名前</th>
-                      <th className="whitespace-nowrap pb-2 font-medium text-muted-foreground">アクセス日時</th>
+                      <th className="whitespace-nowrap pb-2 pr-4 font-medium text-muted-foreground">氏名</th>
+                      <th className="whitespace-nowrap pb-2 pr-4 font-medium text-muted-foreground text-right">合計視聴時間</th>
+                      <th className="whitespace-nowrap pb-2 font-medium text-muted-foreground text-right">合計コメント数</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {accessLogs.map((log) => (
-                      <tr key={log.id} className="border-b last:border-0">
-                        <td className="whitespace-nowrap py-2 pr-4 font-mono text-xs">{log.customer_id}</td>
-                        <td className="whitespace-nowrap py-2 pr-4">{log.customer?.name || "-"}</td>
-                        <td className="whitespace-nowrap py-2 text-muted-foreground">{fmtDate(log.accessed_at)}</td>
+                    {activeLogData.map((row) => (
+                      <tr key={row.customer_id} className="border-b last:border-0">
+                        <td className="whitespace-nowrap py-2 pr-4 font-mono text-xs">{row.customer_id}</td>
+                        <td className="whitespace-nowrap py-2 pr-4">{row.name}</td>
+                        <td className="whitespace-nowrap py-2 pr-4 text-right">{fmtDuration(row.totalSeconds)}</td>
+                        <td className="whitespace-nowrap py-2 text-right">{row.commentCount}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -969,7 +1003,7 @@ export default function ScheduleDetailPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg">視聴セッション</CardTitle>
-              <Button variant="outline" size="sm" onClick={loadSessions} className="gap-1">
+              <Button size="sm" onClick={loadSessions} className="gap-1 bg-blue-600 hover:bg-blue-700 text-white">
                 <RefreshCw className="h-3 w-3" />
                 更新
               </Button>
@@ -1024,27 +1058,67 @@ export default function ScheduleDetailPage() {
       {activeTab === "chat" && (
         <Card>
           <CardHeader className="space-y-3">
-            <CardTitle className="text-lg">チャットモデレーション</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg">チャットモデレーション</CardTitle>
+              <div className="flex gap-2">
+                {chatMessages.length > 0 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1"
+                    onClick={() => {
+                      const headers = ["投稿時間", "ID", "氏名", "投稿名", "投稿内容", "承認"];
+                      const statusMap: Record<string, string> = { pending: "未承認", approved: "承認済", rejected: "拒否", deleted: "削除済" };
+                      const rows = filteredChat.map((m) => {
+                        const customer = sessions.find((s) => s.customer_id === m.customer_id)?.customer;
+                        return [
+                          fmtDate(m.created_at),
+                          m.customer_id,
+                          customer?.name || "-",
+                          m.display_name,
+                          m.content,
+                          statusMap[m.status] || m.status,
+                        ];
+                      });
+                      const csv = [headers, ...rows].map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
+                      const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+                      const a = document.createElement("a");
+                      a.href = URL.createObjectURL(blob);
+                      a.download = `chat_log_${new Date().toISOString().slice(0, 10)}.csv`;
+                      a.click();
+                    }}
+                  >
+                    <Download className="h-3 w-3" />
+                    CSV
+                  </Button>
+                )}
+                <Button size="sm" onClick={loadChat} className="gap-1 bg-blue-600 hover:bg-blue-700 text-white">
+                  <RefreshCw className="h-3 w-3" />
+                  更新
+                </Button>
+              </div>
+            </div>
             <div className="flex items-center gap-2">
               <div className="flex gap-1 rounded border bg-muted/30 p-0.5">
-                {(["all", "pending", "approved"] as const).map((f) => (
-                  <button
-                    key={f}
-                    onClick={() => setChatFilter(f)}
-                    className={`rounded px-3 py-1.5 text-xs font-medium transition-colors ${
-                      chatFilter === f
-                        ? "bg-background shadow-sm"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    {f === "all" ? "すべて" : f === "pending" ? "未承認" : "承認済"}
-                  </button>
-                ))}
+                {(["all", "pending", "approved"] as const).map((f) => {
+                  const count = f === "all"
+                    ? chatMessages.length
+                    : chatMessages.filter((m) => m.status === f).length;
+                  return (
+                    <button
+                      key={f}
+                      onClick={() => setChatFilter(f)}
+                      className={`rounded px-3 py-1.5 text-xs font-medium transition-colors ${
+                        chatFilter === f
+                          ? "bg-background shadow-sm"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {f === "all" ? `すべて (${count})` : f === "pending" ? `未承認 (${count})` : `承認済 (${count})`}
+                    </button>
+                  );
+                })}
               </div>
-              <Button variant="outline" size="sm" onClick={loadChat} className="gap-1">
-                <RefreshCw className="h-3 w-3" />
-                更新
-              </Button>
             </div>
           </CardHeader>
           <CardContent>
