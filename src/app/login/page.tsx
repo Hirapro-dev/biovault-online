@@ -111,7 +111,7 @@ export default function LoginPage() {
             <img
               src="/logo.png"
               alt="BioVault"
-              className="mb-6 h-8 w-auto object-contain drop-shadow-[0_0_15px_rgba(94,234,212,0.25)]"
+              className="mb-3 h-8 w-auto object-contain drop-shadow-[0_0_15px_rgba(94,234,212,0.25)]"
             />
             <h1 className="bg-gradient-to-r from-teal-200 via-cyan-100 to-teal-200 bg-clip-text text-xl font-bold tracking-wide text-transparent">
               ONLINE SEMINAR

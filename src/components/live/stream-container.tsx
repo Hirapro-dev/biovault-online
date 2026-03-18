@@ -227,7 +227,7 @@ export function StreamContainer({
           <img src="/video-bg.png" alt="" className="absolute inset-0 h-full w-full object-cover" />
           <div className="relative z-10 text-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.png" alt="BioVault" className="mx-auto mb-6 h-8 w-auto object-contain drop-shadow-[0_0_15px_rgba(94,234,212,0.25)]" />
+            <img src="/logo.png" alt="BioVault" className="mx-auto mb-4 h-8 w-auto object-contain drop-shadow-[0_0_15px_rgba(94,234,212,0.25)]" />
             <p className="text-lg font-semibold">テスト配信待機中</p>
             <p className="mt-2 text-sm text-slate-400">管理画面で「テスト配信」を開始してください</p>
             <p className="mt-1 text-xs text-slate-500">開始すると自動で切り替わります</p>
@@ -246,7 +246,7 @@ export function StreamContainer({
               <img src="/video-bg.png" alt="" className="absolute inset-0 h-full w-full object-cover" />
               <div className="relative z-10 text-center text-white">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/logo.png" alt="BioVault" className="mx-auto mb-6 h-8 w-auto object-contain drop-shadow-[0_0_15px_rgba(94,234,212,0.25)]" />
+                <img src="/logo.png" alt="BioVault" className="mx-auto mb-4 h-8 w-auto object-contain drop-shadow-[0_0_15px_rgba(94,234,212,0.25)]" />
                 <p className="text-base md:text-lg font-semibold">配信時間まで今しばらくお待ちください</p>
                 <p className="mt-2 text-sm text-slate-400">
                   開始時刻: {new Date(schedule.scheduled_start).toLocaleString("ja-JP")}
@@ -288,7 +288,7 @@ export function StreamContainer({
               <img src="/video-bg.png" alt="" className="absolute inset-0 h-full w-full object-cover" />
               <div className="relative z-10 text-center text-white">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/logo.png" alt="BioVault" className="mx-auto mb-6 h-8 w-auto object-contain drop-shadow-[0_0_15px_rgba(94,234,212,0.25)]" />
+                <img src="/logo.png" alt="BioVault" className="mx-auto mb-4 h-8 w-auto object-contain drop-shadow-[0_0_15px_rgba(94,234,212,0.25)]" />
                 <p className="text-xl font-semibold">配信は終了しました</p>
                 <p className="mt-2 text-sm text-slate-400">ご視聴ありがとうございました。</p>
               </div>
