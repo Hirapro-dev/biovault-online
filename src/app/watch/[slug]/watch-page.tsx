@@ -134,7 +134,7 @@ export function WatchPage({ schedule, isTestMode = false }: WatchPageProps) {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/logo.png"
-            alt="BioVault"
+            alt="SCPP"
             className="h-6 w-auto object-contain drop-shadow-[0_0_10px_rgba(94,234,212,0.15)]"
           />
           <div className="flex items-center gap-3">

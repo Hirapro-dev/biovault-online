@@ -17,8 +17,8 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "BiioVaultオンラインセミナー｜株式会社SCPP",
-  description: "BiioVaultオンラインセミナー視聴プラットフォーム",
+  title: "SCPPオンラインセミナー｜株式会社SCPP",
+  description: "SCPPオンラインセミナー視聴プラットフォーム",
   robots: { index: false, follow: false },
 };
 
